@@ -628,3 +628,85 @@ footer a:hover { text-decoration: underline; }
         padding: 0 0.6rem;
     }
 }
+
+/* ===== Prism.js 兼容样式 ===== */
+.code-block-new pre[class*="language-"],
+.code-block-new code[class*="language-"] {
+    background: #0d1117;
+    color: #c9d1d9;
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+    padding: 1rem;
+    overflow-x: auto;
+}
+
+/* 确保行号显示正常 */
+.code-block-new pre[class*="language-"]::before,
+.code-block-new pre[class*="language-"]::after {
+    display: none;
+}
+
+/* 调整 Prism.js 主题颜色以匹配 GitHub 风格 */
+.code-block-new .token.comment,
+.code-block-new .token.prolog,
+.code-block-new .token.doctype,
+.code-block-new .token.cdata {
+    color: #8b949e;
+}
+
+.code-block-new .token.punctuation {
+    color: #c9d1d9;
+}
+
+.code-block-new .token.property,
+.code-block-new .token.tag,
+.code-block-new .token.boolean,
+.code-block-new .token.number,
+.code-block-new .token.constant,
+.code-block-new .token.symbol,
+.code-block-new .token.deleted {
+    color: #79c0ff;
+}
+
+.code-block-new .token.selector,
+.code-block-new .token.attr-name,
+.code-block-new .token.string,
+.code-block-new .token.char,
+.code-block-new .token.builtin,
+.code-block-new .token.inserted {
+    color: #a5d6ff;
+}
+
+.code-block-new .token.operator,
+.code-block-new .token.entity,
+.code-block-new .token.url,
+.code-block-new .language-css .token.string,
+.code-block-new .style .token.string {
+    color: #c9d1d9;
+}
+
+.code-block-new .token.atrule,
+.code-block-new .token.attr-value,
+.code-block-new .token.keyword {
+    color: #ff7b72;
+}
+
+.code-block-new .token.function,
+.code-block-new .token.class-name {
+    color: #d2a8ff;
+}
+
+.code-blockNew .token.regex,
+.code-block-new .token.important,
+.code-block-new .token.variable {
+    color: #ffa657;
+}
+
+/* 全屏模式下的 Prism.js 样式 */
+.code-block-new.fullscreen pre[class*="language-"],
+.code-block-new.fullscreen code[class*="language-"] {
+    height: calc(100vh - 60px);
+    font-size: 16px;
+}
