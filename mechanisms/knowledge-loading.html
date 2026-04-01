@@ -76,7 +76,12 @@
             <h2>⚙️ 实现细节</h2>
             <div class="code-block">
                 <h3>SkillTool - 知识加载工具</h3>
-                <pre><code>async function executeSkill(skillName: string) {
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>async function executeSkill(skillName: string) {
   // 1. 查找 Skill
   const skill = findSkill(skillName);
   
@@ -89,6 +94,21 @@
     content: prompt
   };
 }</code></pre>
+                    <pre class="code-panel" data-lang="python"><code>from typing import Any, Dict
+
+async def execute_skill(skill_name: str) -> Dict[str, Any]:
+    # 1. 查找 Skill
+    skill = find_skill(skill_name)
+    
+    # 2. 获取 Prompt 内容
+    prompt = await skill.get_prompt_for_command()
+    
+    # 3. 通过 tool_result 注入
+    return {
+        "type": "tool_result",
+        "content": prompt
+    }</code></pre>
+                </div>
             </div>
         </section>
 

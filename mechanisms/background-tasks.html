@@ -38,7 +38,12 @@
             <h2>⚙️ 实现细节</h2>
             <div class="code-block">
                 <h3>DreamTask - 后台任务</h3>
-                <pre><code>interface DreamTaskParams {
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>interface DreamTaskParams {
   task: string;
   callback?: (result: any) => void;
   timeout?: number;
@@ -64,6 +69,35 @@ async function executeDreamTask(params: DreamTaskParams) {
   
   return taskId;
 }</code></pre>
+                    <pre class="code-panel" data-lang="python"><code>from dataclasses import dataclass, field
+from typing import Any, Callable, Optional
+import asyncio
+
+@dataclass
+class DreamTaskParams:
+    task: str
+    callback: Optional[Callable[[Any], None]] = None
+    timeout: Optional[int] = None
+
+async def execute_dream_task(params: DreamTaskParams) -> str:
+    # 1. 创建后台任务
+    task_id = generate_task_id()
+    
+    # 2. 启动守护线程
+    async def _daemon():
+        # 3. 执行耗时操作
+        result = await execute_long_running_task(params.task)
+        
+        # 4. 任务完成，注入通知
+        await inject_completion_notification(task_id, result)
+        
+        # 5. 调用回调函数
+        if params.callback:
+            params.callback(result)
+    
+    asyncio.create_task(_daemon())
+    return task_id</code></pre>
+                </div>
             </div>
         </section>
 
@@ -71,7 +105,12 @@ async function executeDreamTask(params: DreamTaskParams) {
             <h2>📚 使用示例</h2>
             <div class="code-block">
                 <h3>后台执行测试</h3>
-                <pre><code>// 1. 启动后台测试任务
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>// 1. 启动后台测试任务
 const taskId = await executeDreamTask({
   task: "运行所有单元测试",
   callback: (result) => {
@@ -83,6 +122,19 @@ const taskId = await executeDreamTask({
 console.log("测试已在后台启动，任务 ID:", taskId);
 
 // 3. 当测试完成时，会自动收到通知</code></pre>
+                    <pre class="code-panel" data-lang="python"><code># 1. 启动后台测试任务
+task_id = await execute_dream_task(
+    DreamTaskParams(
+        task="运行所有单元测试",
+        callback=lambda result: print(f"测试完成: {result}")
+    )
+)
+
+# 2. 主对话可以继续处理其他任务
+print(f"测试已在后台启动，任务 ID: {task_id}")
+
+# 3. 当测试完成时，会自动收到通知</code></pre>
+                </div>
             </div>
         </section>
     </main>

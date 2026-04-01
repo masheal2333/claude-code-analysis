@@ -144,7 +144,12 @@
                 
                 <div class="loading-code">
                     <h3>💻 加载过程代码</h3>
-                    <pre><code>// skills/loadSkill.ts
+                    <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>// skills/loadSkill.ts
 
 interface SkillDefinition {
   name: string;
@@ -192,6 +197,56 @@ async function findSkillPath(skillName: string): Promise<string> {
   
   throw new Error(`Skill not found: ${skillName}`);
 }</code></pre>
+                    <pre class="code-panel" data-lang="python"><code># skills/load_skill.py
+
+from dataclasses import dataclass, field
+from typing import List, Optional, Set
+import os
+from pathlib import Path
+
+@dataclass
+class SkillDefinition:
+    name: str
+    description: str
+    prompt: str
+    path: str
+    triggers: Optional[List[str]] = None
+    directory_triggers: Optional[Set[str]] = None
+
+async def load_skill(skill_name: str) -> SkillDefinition:
+    # 1. 查找 Skill 文件
+    skill_path = await find_skill_path(skill_name)
+    
+    # 2. 读取 SKILL.md
+    skill_content = await read_file(skill_path)
+    
+    # 3. 解析 Skill 定义
+    skill = parse_skill_definition(skill_content)
+    
+    # 4. 注册到 Skill 注册表
+    await register_skill(skill)
+    
+    return skill
+
+async def find_skill_path(skill_name: str) -> str:
+    # 查找顺序：
+    # 1. 项目目录 .claude/skills/
+    # 2. 用户目录 ~/.claude/skills/
+    # 3. 内置 skills/
+    # 4. 远程市场
+    
+    search_paths = [
+        f".claude/skills/{skill_name}/SKILL.md",
+        f"{Path.home()}/.claude/skills/{skill_name}/SKILL.md",
+        f"skills/{skill_name}/SKILL.md"
+    ]
+    
+    for path in search_paths:
+        if await file_exists(path):
+            return path
+    
+    raise FileNotFoundError(f"Skill not found: {skill_name}")</code></pre>
+                </div>
                 </div>
             </div>
         </section>
@@ -288,7 +343,12 @@ clawhub update skill-name</code></pre>
                 
                 <div class="discovery-code">
                     <h3>💻 实现代码</h3>
-                    <pre><code>// skills/skillDiscovery.ts
+                    <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>// skills/skillDiscovery.ts
 
 interface SkillDiscoveryResult {
   skill: SkillDefinition;
@@ -347,6 +407,62 @@ function calculateConfidence(
   
   return score;
 }</code></pre>
+                    <pre class="code-panel" data-lang="python"><code># skills/skill_discovery.py
+
+from dataclasses import dataclass
+from typing import List, Tuple
+
+@dataclass
+class SkillDiscoveryResult:
+    skill: SkillDefinition
+    confidence: float
+    reason: str
+
+async def discover_skills(
+    user_input: str
+) -> List[SkillDiscoveryResult]:
+    # 1. 提取关键词
+    keywords = extract_keywords(user_input)
+    
+    # 2. 获取所有可用的 Skill
+    all_skills = await get_all_skills()
+    
+    # 3. 计算匹配度
+    results = []
+    
+    for skill in all_skills:
+        confidence = calculate_confidence(keywords, skill)
+        
+        if confidence > 0.5:  # 置信度阈值
+            results.append(SkillDiscoveryResult(
+                skill=skill,
+                confidence=confidence,
+                reason=generate_reason(keywords, skill)
+            ))
+    
+    # 4. 按置信度排序
+    return sorted(results, key=lambda r: r.confidence, reverse=True)
+
+def calculate_confidence(
+    keywords: List[str],
+    skill: SkillDefinition
+) -> float:
+    score = 0.0
+    
+    # 检查 Skill 名称
+    if any(k in skill.name for k in keywords):
+        score += 0.3
+    
+    # 检查 Skill 描述
+    if any(k in skill.description for k in keywords):
+        score += 0.4
+    
+    # 检查触发词
+    if skill.triggers and any(t in keywords for t in skill.triggers):
+        score += 0.3
+    
+    return score</code></pre>
+                </div>
                 </div>
             </div>
         </section>

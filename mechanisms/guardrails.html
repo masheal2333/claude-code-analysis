@@ -64,7 +64,12 @@
             <h2>⚙️ 实现细节</h2>
             <div class="code-block">
                 <h3>permissions/ - 权限系统</h3>
-                <pre><code>interface PermissionCheck {
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>interface PermissionCheck {
   tool: string;
   params: any;
   context: ToolUseContext;
@@ -94,6 +99,36 @@ async function checkPermissions(check: PermissionCheck) {
     confirmationRequired: true
   };
 }</code></pre>
+                    <pre class="code-panel" data-lang="python"><code>from dataclasses import dataclass
+from typing import Any
+
+@dataclass
+class PermissionCheck:
+    tool: str
+    params: Any
+    context: ToolUseContext
+
+async def check_permissions(check: PermissionCheck) -> dict:
+    # 1. 检查工具是否需要权限
+    if not requires_permission(check.tool):
+        return {"allowed": True}
+    
+    # 2. 检查用户是否已授权
+    if await has_user_authorization(check):
+        return {"allowed": True}
+    
+    # 3. 检查安全策略
+    policy = await get_security_policy()
+    if policy.allows(check):
+        return {"allowed": True}
+    
+    # 4. 需要用户确认
+    return {
+        "allowed": False,
+        "reason": "需要用户确认",
+        "confirmation_required": True
+    }</code></pre>
+                </div>
             </div>
         </section>
 
@@ -101,7 +136,12 @@ async function checkPermissions(check: PermissionCheck) {
             <h2>📚 使用示例</h2>
             <div class="code-block">
                 <h3>危险操作确认</h3>
-                <pre><code>// 当 Claude 尝试删除文件时
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>// 当 Claude 尝试删除文件时
 const result = await checkPermissions({
   tool: "file_delete",
   params: { path: "/important/file.txt" },
@@ -120,6 +160,26 @@ if (!result.allowed) {
     throw new Error("用户取消了操作");
   }
 }</code></pre>
+                    <pre class="code-panel" data-lang="python"><code># 当 Claude 尝试删除文件时
+result = await check_permissions(
+    PermissionCheck(
+        tool="file_delete",
+        params={"path": "/important/file.txt"},
+        context=current_context
+    )
+)
+
+if not result["allowed"]:
+    # 弹出确认对话框
+    confirmed = await show_confirmation_dialog(
+        title="确认删除",
+        message="确定要删除 /important/file.txt 吗？",
+        details="此操作不可撤销"
+    )
+    
+    if not confirmed:
+        raise RuntimeError("用户取消了操作")</code></pre>
+                </div>
             </div>
         </section>
     </main>

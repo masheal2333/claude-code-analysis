@@ -39,7 +39,12 @@
             <h2>⚙️ 实现细节</h2>
             <div class="code-block">
                 <h3>AgentTool - 子代理工具</h3>
-                <pre><code>interface AgentToolParams {
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>interface AgentToolParams {
   task: string;           // 子代理任务描述
   context?: string;       // 额外上下文
   model?: string;         // 使用的模型
@@ -71,6 +76,41 @@ async function executeAgentTool(params: AgentToolParams) {
   
   return result;
 }</code></pre>
+                    <pre class="code-panel" data-lang="python"><code>from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
+@dataclass
+class AgentToolParams:
+    task: str                    # 子代理任务描述
+    context: Optional[str] = None  # 额外上下文
+    model: Optional[str] = None    # 使用的模型
+    max_tokens: Optional[int] = None  # 最大 Token 数
+
+async def execute_agent_tool(params: AgentToolParams) -> Dict[str, Any]:
+    # 1. 创建新的消息历史
+    messages: List[Dict[str, str]] = []
+    
+    # 2. 添加任务描述
+    messages.append({
+        "role": "user",
+        "content": params.task
+    })
+    
+    # 3. 创建子代理上下文
+    agent_context = create_agent_context(
+        parent_agent_id=current_agent_id,
+        task_id=generate_task_id()
+    )
+    
+    # 4. 执行子代理
+    result = await run_agent(
+        messages=messages,
+        context=agent_context,
+        model=params.model
+    )
+    
+    return result</code></pre>
+                </div>
             </div>
         </section>
 
@@ -100,7 +140,12 @@ async function executeAgentTool(params: AgentToolParams) {
             <h2>📚 使用示例</h2>
             <div class="code-block">
                 <h3>使用子代理处理多个文件</h3>
-                <pre><code>// 主代理可以创建多个子代理并行处理
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>// 主代理可以创建多个子代理并行处理
 const results = await Promise.all([
   // 子代理 1: 分析文件 A
   executeAgentTool({
@@ -117,6 +162,26 @@ const results = await Promise.all([
 
 // 主代理聚合结果
 const aggregated = aggregateResults(results);</code></pre>
+                    <pre class="code-panel" data-lang="python"><code>import asyncio
+
+# 主代理可以创建多个子代理并行处理
+results = await asyncio.gather(
+    # 子代理 1: 分析文件 A
+    execute_agent_tool(AgentToolParams(
+        task="分析 fileA.py 的代码结构",
+        context="需要识别所有函数和类"
+    )),
+    
+    # 子代理 2: 分析文件 B
+    execute_agent_tool(AgentToolParams(
+        task="分析 fileB.py 的代码结构",
+        context="需要识别所有函数和类"
+    ))
+)
+
+# 主代理聚合结果
+aggregated = aggregate_results(results)</code></pre>
+                </div>
             </div>
         </section>
     </main>

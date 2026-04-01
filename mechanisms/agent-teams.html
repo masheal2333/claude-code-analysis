@@ -38,7 +38,12 @@
             <h2>⚙️ 实现细节</h2>
             <div class="code-block">
                 <h3>TeamCreate - 创建团队</h3>
-                <pre><code>interface TeamCreateParams {
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>interface TeamCreateParams {
   name: string;
   members: TeamMember[];
   communicationProtocol?: 'async' | 'sync';
@@ -63,6 +68,40 @@ async function createTeam(params: TeamCreateParams) {
   
   return team;
 }</code></pre>
+                    <pre class="code-panel" data-lang="python"><code>from dataclasses import dataclass, field
+from typing import List, Optional
+from datetime import datetime
+
+@dataclass
+class TeamMember:
+    id: str
+    name: str
+    role: str
+
+@dataclass
+class TeamCreateParams:
+    name: str
+    members: List[TeamMember]
+    communication_protocol: Optional[str] = "async"  # "async" | "sync"
+
+async def create_team(params: TeamCreateParams) -> dict:
+    # 1. 创建团队
+    team = {
+        "id": generate_team_id(),
+        "name": params.name,
+        "members": params.members,
+        "created_at": datetime.utcnow().isoformat()
+    }
+    
+    # 2. 为每个成员创建邮箱
+    for member in params.members:
+        await create_mailbox(member.id)
+    
+    # 3. 建立通信通道
+    await setup_communication_channels(team)
+    
+    return team</code></pre>
+                </div>
             </div>
         </section>
 

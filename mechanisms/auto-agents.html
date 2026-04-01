@@ -38,7 +38,12 @@
             <h2>⚙️ 实现细节</h2>
             <div class="code-block">
                 <h3>coordinator/coordinatorMode.ts</h3>
-                <pre><code>interface CoordinatorConfig {
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>interface CoordinatorConfig {
   scanInterval: number;  // 扫描间隔（毫秒）
   maxConcurrent: number; // 最大并发任务数
   priorityWeights: { [key: string]: number };
@@ -62,6 +67,33 @@ async function startCoordinator(config: CoordinatorConfig) {
     }
   }, config.scanInterval);
 }</code></pre>
+                    <pre class="code-panel" data-lang="python"><code>from dataclasses import dataclass
+from typing import Dict
+import asyncio
+
+@dataclass
+class CoordinatorConfig:
+    scan_interval: float       # 扫描间隔（秒）
+    max_concurrent: int        # 最大并发任务数
+    priority_weights: Dict[str, float]
+
+async def start_coordinator(config: CoordinatorConfig) -> None:
+    # 1. 启动扫描循环
+    while True:
+        await asyncio.sleep(config.scan_interval)
+        
+        # 2. 检查代理是否空闲
+        if is_agent_idle():
+            # 3. 扫描待办任务
+            tasks = await scan_available_tasks()
+            
+            # 4. 根据优先级排序
+            sorted_tasks = sort_by_priority(tasks, config.priority_weights)
+            
+            # 5. 认领任务
+            for task in sorted_tasks[:config.max_concurrent]:
+                await claim_task(task)</code></pre>
+                </div>
             </div>
         </section>
 

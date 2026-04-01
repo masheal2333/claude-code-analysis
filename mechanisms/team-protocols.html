@@ -66,7 +66,12 @@
             <h2>⚙️ 实现细节</h2>
             <div class="code-block">
                 <h3>SendMessageTool - 消息发送工具</h3>
-                <pre><code>interface SendMessageParams {
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>interface SendMessageParams {
   to: string;
   action: string;
   params: any;
@@ -92,6 +97,36 @@ async function sendMessage(params: SendMessageParams) {
   
   return response;
 }</code></pre>
+                    <pre class="code-panel" data-lang="python"><code>from dataclasses import dataclass
+from typing import Any, Optional
+from datetime import datetime
+
+@dataclass
+class SendMessageParams:
+    to: str
+    action: str
+    params: dict
+    timeout: Optional[int] = None
+
+async def send_message(params: SendMessageParams) -> dict:
+    # 1. 构建消息
+    message = {
+        "type": "request",
+        "from": current_agent_id,
+        "to": params.to,
+        "action": params.action,
+        "params": params.params,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+    
+    # 2. 发送到目标代理的邮箱
+    await send_to_mailbox(params.to, message)
+    
+    # 3. 等待响应
+    response = await wait_for_response(message["id"], params.timeout)
+    
+    return response</code></pre>
+                </div>
             </div>
         </section>
     </main>
