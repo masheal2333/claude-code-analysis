@@ -451,7 +451,12 @@ content:
                 
                 <div class="strategy-code">
                     <h4>💻 实现代码</h4>
-                    <pre><code>// services/compact/contextCollapse.ts
+                    <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>// services/compact/contextCollapse.ts
 
 interface SubAgentTask {
   taskId: string;
@@ -500,6 +505,59 @@ async function contextCollapse(
   
   return result;
 }</code></pre>
+                    <pre class="code-panel" data-lang="python"><code># services/compact/context_collapse.py
+
+from dataclasses import dataclass
+from typing import List, Dict, Any
+import json
+
+@dataclass
+class SubAgentTask:
+    task_id: str
+    task: str
+    messages: List[Dict[str, Any]]
+    result: Any
+    status: str  # "completed" | "failed"
+
+async def context_collapse(
+    main_messages: List[Dict[str, Any]],
+    sub_agent_tasks: List[SubAgentTask]
+) -> List[Dict[str, Any]]:
+    result = []
+    
+    # 建立消息 ID 到任务的映射
+    task_map = {}
+    for task in sub_agent_tasks:
+        for msg in task.messages:
+            task_map[msg["id"]] = task
+    
+    for msg in main_messages:
+        # 1. 检查是否是子代理任务的消息
+        task = task_map.get(msg["id"])
+        
+        if task is not None:
+            # 2. 只保留第一条和最后一条消息
+            is_first = task.messages[0]["id"] == msg["id"]
+            is_last = task.messages[-1]["id"] == msg["id"]
+            
+            if is_first:
+                result.append(msg)  # 保留任务描述
+            elif is_last:
+                result.append({
+                    "role": "assistant",
+                    "content": (
+                        f"[子代理任务完成]\n"
+                        f"任务: {task.task}\n"
+                        f"状态: {task.status}\n"
+                        f"结果: {json.dumps(task.result)[:200]}..."
+                    )
+                })
+            # 中间的详细消息被丢弃
+        else:
+            result.append(msg)
+    
+    return result</code></pre>
+                </div>
                 </div>
                 
                 <div class="strategy-example">

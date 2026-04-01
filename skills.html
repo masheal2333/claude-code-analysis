@@ -267,13 +267,26 @@ async def find_skill_path(skill_name: str) -> str:
                         </ul>
                     </div>
                     <div class="skill-example">
-                        <pre><code>.claude/skills/
+                        <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>.claude/skills/
 ├── my-skill/
 │   ├── SKILL.md          # Skill 定义
 │   ├── scripts/          # 脚本目录
 │   │   └── run.sh
 │   └── config/           # 配置目录
 │       └── settings.json</code></pre>
+                    <pre class="code-panel" data-lang="python"><code>.claude/skills/
+├── my-skill/
+│   ├── SKILL.md          # Skill 定义
+│   ├── scripts/          # 脚本目录
+│   │   └── run.sh
+│   └── config/           # 配置目录
+│       └── settings.json</code></pre>
+                </div>
                     </div>
                 </div>
                 
@@ -290,7 +303,12 @@ async def find_skill_path(skill_name: str) -> str:
                         </ul>
                     </div>
                     <div class="skill-example">
-                        <pre><code>// MCP 服务配置
+                        <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>// MCP 服务配置
 {
   "mcpServers": {
     "github": {
@@ -299,6 +317,16 @@ async def find_skill_path(skill_name: str) -> str:
     }
   }
 }</code></pre>
+                    <pre class="code-panel" data-lang="python"><code># MCP 服务配置 (config.json)
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"]
+    }
+  }
+}</code></pre>
+                </div>
                     </div>
                 </div>
                 
@@ -315,11 +343,22 @@ async def find_skill_path(skill_name: str) -> str:
                         </ul>
                     </div>
                     <div class="skill-example">
-                        <pre><code># 从市场安装 Skill
+                        <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code># 从市场安装 Skill
 clawhub install skill-name
 
 # 更新 Skill
 clawhub update skill-name</code></pre>
+                    <pre class="code-panel" data-lang="python"><code># 从市场安装 Skill (pip 方式)
+pip install claude-skill-name
+
+# 更新 Skill
+pip install --upgrade claude-skill-name</code></pre>
+                </div>
                     </div>
                 </div>
             </div>
@@ -471,7 +510,12 @@ def calculate_confidence(
             <h2>⚙️ 实现细节</h2>
             <div class="implementation-detail">
                 <h3>📋 SkillTool 核心实现</h3>
-                <pre><code>// tools/SkillTool.ts
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>// tools/SkillTool.ts
 
 interface SkillToolParams {
   skill: string;
@@ -520,6 +564,55 @@ async function injectSkillPrompt(
   
   return content;
 }</code></pre>
+                    <pre class="code-panel" data-lang="python"><code># tools/skill_tool.py
+
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
+
+@dataclass
+class SkillToolParams:
+    skill: str
+    command: Optional[str] = None
+    args: Optional[Dict[str, Any]] = None
+
+class SkillTool:
+    name = "skill"
+    description = "Execute a skill to perform specialized tasks"
+    
+    async def execute(self, params: SkillToolParams) -> Dict[str, Any]:
+        # 1. 加载 Skill
+        skill = await load_skill(params.skill)
+        
+        # 2. 获取 Prompt
+        prompt = await skill.get_prompt_for_command(params.command)
+        
+        # 3. 通过 tool_result 注入
+        return {
+            "type": "tool_result",
+            "content": prompt,
+            "metadata": {
+                "skill_name": skill.name,
+                "skill_path": skill.path
+            }
+        }
+
+# Skill Prompt 注入机制
+async def inject_skill_prompt(
+    skill: SkillDefinition,
+    command: Optional[str] = None
+) -> str:
+    # 读取 SKILL.md 内容
+    content = await read_file(skill.path)
+    
+    # 解析 Markdown
+    sections = parse_markdown(content)
+    
+    # 根据命令提取相关部分
+    if command:
+        return extract_command_section(sections, command)
+    
+    return content</code></pre>
+                </div>
             </div>
         </section>
 
@@ -527,7 +620,12 @@ async function injectSkillPrompt(
             <h2>📚 使用示例</h2>
             <div class="example-detail">
                 <h3>1. 创建自定义 Skill</h3>
-                <pre><code># 创建 Skill 目录
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code># 创建 Skill 目录
 mkdir -p .claude/skills/code-review
 
 # 创建 SKILL.md
@@ -557,9 +655,49 @@ SKILLEOF
 
 # Skill 自动加载
 # 当用户说 "review code" 时，会自动推荐此 Skill</code></pre>
+                    <pre class="code-panel" data-lang="python"><code># 创建 Skill 目录
+from pathlib import Path
+
+skill_dir = Path(".claude/skills/code-review")
+skill_dir.mkdir(parents=True, exist_ok=True)
+
+# 创建 SKILL.md
+skill_content = """# Code Review Skill
+
+## Description
+Perform comprehensive code review with best practices.
+
+## Usage
+When user asks for code review, use this skill.
+
+## Steps
+1. Read the code file
+2. Check for:
+   - Code style violations
+   - Potential bugs
+   - Performance issues
+   - Security vulnerabilities
+3. Provide detailed feedback
+
+## Triggers
+- "review code"
+- "check code quality"
+- "code review"
+"""
+
+(skill_dir / "SKILL.md").write_text(skill_content)
+
+# Skill 自动加载
+# 当用户说 "review code" 时，会自动推荐此 Skill</code></pre>
+                </div>
 
                 <h3>2. 使用内置 Skill</h3>
-                <pre><code># Claude Code 内置的 Skill
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code># Claude Code 内置的 Skill
 claude> 使用 skill: github
 # 会加载 GitHub 相关的 Skill，提供：
 # - 仓库操作
@@ -571,6 +709,18 @@ claude> 使用 skill: filesystem
 # - 文件搜索
 # - 批量操作
 # - 目录分析</code></pre>
+                    <pre class="code-panel" data-lang="python"><code># Claude Code 内置的 Skill (Python SDK)
+from claude_code import ClaudeCode
+
+cc = ClaudeCode()
+# 加载 GitHub 相关的 Skill
+github_skill = cc.load_skill("github")
+# 提供：仓库操作、Issue 管理、PR 创建
+
+# 加载文件系统 Skill
+fs_skill = cc.load_skill("filesystem")
+# 提供：文件搜索、批量操作、目录分析</code></pre>
+                </div>
             </div>
         </section>
 
