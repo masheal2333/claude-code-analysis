@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code — Harness Engineering & Skills 深度分析</title>
+<link rel="stylesheet" href="docs/css/style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔧</text></svg>">
+</head>
+<body>
+
+<!-- Language toggle -->
+<div class="lang-toggle" id="langToggle">
+  <button class="lang-btn active" data-lang="zh">中文</button>
+  <button class="lang-btn" data-lang="en">EN</button>
+</div>
+
+<!-- Hero -->
+<header class="hero">
+  <div class="hero-content">
+    <h1>Claude Code <span class="accent">Harness Engineering</span></h1>
+    <p class="subtitle" data-zh="基于 @anthropic-ai/claude-code v2.1.88 源码的深度分析" data-en="Deep analysis based on @anthropic-ai/claude-code v2.1.88 source code">基于 @anthropic-ai/claude-code v2.1.88 源码的深度分析</p>
+    <div class="hero-stats">
+      <div class="stat"><span class="num">1,332</span><span class="label" data-zh="TypeScript 文件" data-en="TS Files">TypeScript 文件</span></div>
+      <div class="stat"><span class="num">12</span><span class="label" data-zh="Harness 层级" data-en="Harness Layers">Harness 层级</span></div>
+      <div class="stat"><span class="num">40+</span><span class="label" data-zh="工具注册" data-en="Tools">工具注册</span></div>
+      <div class="stat"><span class="num">∞</span><span class="label" data-zh="可扩展 Skills" data-en="Extensible Skills">可扩展 Skills</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- Navigation -->
+<nav class="main-nav" id="mainNav">
+  <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+  <ul class="nav-links">
+    <li><a href="#overview" class="active" data-section="overview" data-zh="概述" data-en="Overview">概述</a></li>
+    <li><a href="#harness" data-section="harness" data-zh="Harness 12层" data-en="12 Layers">Harness 12层</a></li>
+    <li><a href="#skills" data-section="skills" data-zh="🔧 Skills 机制" data-en="🔧 Skills">🔧 Skills 机制</a></li>
+    <li><a href="#patterns" data-section="patterns" data-zh="设计模式" data-en="Patterns">设计模式</a></li>
+    <li><a href="#files" data-section="files" data-zh="关键文件" data-en="Key Files">关键文件</a></li>
+  </ul>
+</nav>
+
+<main class="content">
+
+<!-- ==================== Section 1: Overview ==================== -->
+<section id="overview" class="section active">
+  <h2 data-zh="什么是 Harness Engineering？" data-en="What is Harness Engineering?">什么是 Harness Engineering？</h2>
+  <div class="card">
+    <p data-zh="Harness Engineering 是围绕大语言模型（LLM）构建 <strong>生产级代理系统</strong> 的工程实践。它不涉及模型训练或微调，而是专注于让 LLM 安全、高效、可控地完成复杂任务。" data-en="Harness Engineering is the practice of building production-grade agent systems around LLMs. It focuses on making LLMs safely, efficiently, and controllably complete complex tasks.">Harness Engineering 是围绕大语言模型（LLM）构建 <strong>生产级代理系统</strong> 的工程实践。它不涉及模型训练或微调，而是专注于让 LLM 安全、高效、可控地完成复杂任务。</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <h3 data-zh="核心挑战" data-en="Core Challenges">核心挑战</h3>
+      <ul>
+        <li data-zh="如何让 LLM 安全地调用外部工具" data-en="How to let LLMs safely call external tools">如何让 LLM 安全地调用外部工具</li>
+        <li data-zh="如何管理多步骤任务的执行流程" data-en="How to manage multi-step task execution">如何管理多步骤任务的执行流程</li>
+        <li data-zh="如何处理上下文窗口的限制" data-en="How to handle context window limits">如何处理上下文窗口的限制</li>
+        <li data-zh="如何协调多个代理协作" data-en="How to coordinate multiple agents">如何协调多个代理协作</li>
+        <li data-zh="如何持久化状态和恢复会话" data-en="How to persist state and resume sessions">如何持久化状态和恢复会话</li>
+        <li data-zh="如何按需注入领域知识" data-en="How to inject domain knowledge on demand">如何按需注入领域知识</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3 data-zh="Claude Code 的方案" data-en="Claude Code's Approach">Claude Code 的方案</h3>
+      <p data-zh="Claude Code 用 <strong>12 层渐进式 Harness 机制</strong> 解决这些问题。每一层都在前一层的基础上叠加新能力，从最简单的主循环到完全自主的代理团队。" data-en="Claude Code solves these with <strong>12 progressive harness layers</strong>. Each layer builds on the previous, from a simple main loop to fully autonomous agent teams.">Claude Code 用 <strong>12 层渐进式 Harness 机制</strong> 解决这些问题。每一层都在前一层的基础上叠加新能力，从最简单的主循环到完全自主的代理团队。</p>
+      <div class="arch-mini">
+        <div class="layer l-loop">s01 主循环</div>
+        <div class="layer l-tool">s02 工具调度</div>
+        <div class="layer l-plan">s03 规划</div>
+        <div class="layer l-agent">s04 子代理</div>
+        <div class="layer l-know">s05 知识</div>
+        <div class="layer l-ctx">s06 上下文</div>
+        <div class="layer l-task">s07 任务</div>
+        <div class="layer l-bg">s08 后台</div>
+        <div class="layer l-team">s09 团队</div>
+        <div class="layer l-proto">s10 协议</div>
+        <div class="layer l-auto">s11 自主</div>
+        <div class="layer l-tree">s12 隔离</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== Section 2: Harness 12 Layers ==================== -->
+<section id="harness" class="section">
+  <h2 data-zh="12 层渐进式 Harness 机制" data-en="12 Progressive Harness Layers">12 层渐进式 Harness 机制</h2>
+  <p class="section-desc" data-zh="每一层都在前一层基础上叠加，从最基础的 API 调用循环到完全自主的代理团队协作。" data-en="Each layer builds on the previous, from a basic API loop to fully autonomous agent team collaboration.">每一层都在前一层基础上叠加，从最基础的 API 调用循环到完全自主的代理团队协作。</p>
+
+  <!-- s01 -->
+  <div class="harness-card" id="s01">
+    <div class="hc-header"><span class="hc-num">01</span><h3 data-zh="主循环 — The Loop" data-en="The Loop">主循环 — The Loop</h3></div>
+    <blockquote data-zh="「一个循环 + Bash 就够了」" data-en='"One loop & Bash is all you need"' data-is-quote="true">「一个循环 + Bash 就够了」</blockquote>
+    <p data-zh="<code>query.ts</code> 中的 <code>while(true)</code> 循环调用 Claude API，检查 <code>stop_reason</code>，执行工具，追加结果。整个循环只有几十行核心代码。" data-en="A <code>while(true)</code> loop in <code>query.ts</code> calls Claude API, checks <code>stop_reason</code>, executes tools, appends results.">A <code>while(true)</code> loop in <code>query.ts</code> calls Claude API, checks <code>stop_reason</code>, executes tools, appends results.</p>
+    <div class="code-fold">
+      <button class="code-toggle" data-zh="查看核心循环代码" data-en="View core loop code">查看核心循环代码</button>
+      <pre class="code-block collapsed"><code>// src/query.ts — 主循环核心 (1729 行中的一小部分)
+export async function* query(params) {
+  const terminal = yield* queryLoop(params, consumedCommandUuids)
+  // ... 异步生成器，全链路流式
+}
+
+async function* queryLoop(...) {
+  while (true) {
+    yield { type: 'stream_request_start' }
+    
+    // 调用 Claude API（带 fallback 支持）
+    for await (const message of deps.callModel(...)) {
+      // 处理 assistant 响应
+      yield message
+    }
+    
+    // 检查 stop_reason
+    // 'tool_use' → 执行工具
+    // 'end_turn' → 结束
+    // 'max_tokens' → 截断处理
+    
+    // 执行工具并追加结果
+    const toolResults = await runTools(toolUseBlocks, ...)
+    for (const result of toolResults) {
+      yield result  // tool_result 追加到 messages[]
+    }
+  }
+}</code></pre>
+    </div>
+    <div class="hc-files">
+      <span class="file-tag">src/QueryEngine.ts</span>
+      <span class="file-tag">src/query.ts</span>
+    </div>
+  </div>
+
+  <!-- s02 -->
+  <div class="harness-card" id="s02">
+    <div class="hc-header"><span class="hc-num">02</span><h3 data-zh="工具调度 — Tool Dispatch" data-en="Tool Dispatch">工具调度 — Tool Dispatch</h3></div>
+    <blockquote data-zh="「添加工具 = 添加一个处理器」" data-en='"Adding a tool = adding one handler"' data-is-quote="true">「添加工具 = 添加一个处理器」</blockquote>
+    <p data-zh="每个工具通过 <code>buildTool()</code> 工厂注册到调度 Map，主循环无需修改。工厂自动注入权限检查、沙箱支持和安全默认值。" data-en="Each tool registers via <code>buildTool()</code> factory into a dispatch Map. The loop stays identical.">Each tool registers via <code>buildTool()</code> factory into a dispatch Map. The loop stays identical.</p>
+    <div class="code-fold">
+      <button class="code-toggle" data-zh="查看 buildTool 工厂" data-en="View buildTool factory">查看 buildTool 工厂</button>
+      <pre class="code-block collapsed"><code>// src/Tool.ts — buildTool 工厂模式
+export const SkillTool = buildTool({
+  name: SKILL_TOOL_NAME,
+  inputSchema: lazySchema(() => z.object({
+    skill: z.string().describe('The skill name'),
+    args: z.string().optional(),
+  })),
+  
+  async validateInput({ skill }, context) {
+    // 校验技能名称是否有效
+    const commands = await getAllCommands(context)
+    const found = findCommand(skill, commands)
+    if (!found) return { result: false, message: `Unknown skill: ${skill}` }
+    return { result: true }
+  },
+  
+  async checkPermissions({ skill }, context) {
+    // 检查权限规则（deny → allow → ask）
+    // 安全属性自动放行
+  },
+  
+  async call({ skill, args }, context, canUseTool, parentMsg) {
+    // 执行技能 — inline 或 fork 模式
+  },
+} satisfies ToolDef&lt;InputSchema, Output, Progress&gt;)</code></pre>
+    </div>
+    <div class="hc-files">
+      <span class="file-tag">src/Tool.ts</span>
+      <span class="file-tag">src/tools/</span>
+    </div>
+  </div>
+
+  <!-- s03 -->
+  <div class="harness-card" id="s03">
+    <div class="hc-header"><span class="hc-num">03</span><h3 data-zh="规划系统 — Planning" data-en="Planning">规划系统 — Planning</h3></div>
+    <blockquote data-zh="「没有计划的代理会漂移」" data-en='"An agent without a plan drifts"' data-is-quote="true">「没有计划的代理会漂移」</blockquote>
+    <p data-zh="<code>EnterPlanModeTool</code>/<code>ExitPlanModeTool</code> + <code>TodoWriteTool</code>：先列步骤再执行，完成率翻倍。" data-en="<code>EnterPlanModeTool</code>/<code>ExitPlanModeTool</code> + <code>TodoWriteTool</code>: list steps first, then execute. Doubles completion rate."><code>EnterPlanModeTool</code>/<code>ExitPlanModeTool</code> + <code>TodoWriteTool</code>：先列步骤再执行，完成率翻倍。</p>
+  </div>
+
+  <!-- s04 -->
+  <div class="harness-card" id="s04">
+    <div class="hc-header"><span class="hc-num">04</span><h3 data-zh="子代理 — Sub-Agents" data-en="Sub-Agents">子代理 — Sub-Agents</h3></div>
+    <blockquote data-zh="「拆分大任务；每个子任务干净上下文」" data-en='"Break big tasks; clean context per subtask"' data-is-quote="true">「拆分大任务；每个子任务干净上下文」</blockquote>
+    <p data-zh="<code>AgentTool</code> + <code>forkSubagent.ts</code>：每个子代理获得独立 <code>messages[]</code>，完成后结果注入主上下文。支持 <code>context: 'fork'</code> 模式继承父对话完整上下文。" data-en="<code>AgentTool</code> + <code>forkSubagent.ts</code>: each child gets fresh <code>messages[]</code>. Supports <code>context: 'fork'</code> mode inheriting full parent context."><code>AgentTool</code> + <code>forkSubagent.ts</code>：每个子代理获得独立 <code>messages[]</code>，完成后结果注入主上下文。</p>
+  </div>
+
+  <!-- s05 -->
+  <div class="harness-card" id="s05">
+    <div class="hc-header"><span class="hc-num">05</span><h3 data-zh="知识按需加载 — Knowledge on Demand" data-en="Knowledge on Demand">知识按需加载 — Knowledge on Demand</h3></div>
+    <blockquote data-zh="「需要时加载知识」" data-en='"Load knowledge when you need it"' data-is-quote="true">「需要时加载知识」</blockquote>
+    <p data-zh="<code>SkillTool</code> + <code>memdir/</code>：通过 <code>tool_result</code> 注入知识，而非塞入系统提示。<code>CLAUDE.md</code> 文件按目录延迟加载。详见 → <a href='#skills' onclick=\"navigateTo('skills')\">Skills 机制专区</a>" data-en="<code>SkillTool</code> + <code>memdir/</code>: inject via <code>tool_result</code>, not system prompt. <code>CLAUDE.md</code> loaded lazily per directory. See → <a href='#skills'>Skills Deep Dive</a>"><code>SkillTool</code> + <code>memdir/</code>：通过 <code>tool_result</code> 注入知识，而非塞入系统提示。<code>CLAUDE.md</code> 文件按目录延迟加载。详见 → <a href="#skills" onclick="navigateTo('skills')">Skills 机制专区</a></p>
+  </div>
+
+  <!-- s06 -->
+  <div class="harness-card" id="s06">
+    <div class="hc-header"><span class="hc-num">06</span><h3 data-zh="上下文压缩 — Context Compression" data-en="Context Compression">上下文压缩 — Context Compression</h3></div>
+    <blockquote data-zh="「上下文会满；腾出空间」" data-en='"Context fills up; make room"' data-is-quote="true">「上下文会满；腾出空间」</blockquote>
+    <p data-zh="三层压缩策略应对不同场景。" data-en="Three-layer compression strategy for different scenarios.">三层压缩策略应对不同场景。</p>
+    <div class="compress-layers">
+      <div class="cl"><strong>Layer 1: autoCompact</strong> — 将旧消息摘要为总结</div>
+      <div class="cl"><strong>Layer 2: snipCompact</strong> — 直接修剪低优先级消息</div>
+      <div class="cl"><strong>Layer 3: contextCollapse</strong> — 上下文坍缩（实验性）</div>
+    </div>
+  </div>
+
+  <!-- s07-s12 compact -->
+  <div class="harness-card" id="s07">
+    <div class="hc-header"><span class="hc-num">07</span><h3 data-zh="任务持久化 — Persistent Tasks" data-en="Persistent Tasks">任务持久化 — Persistent Tasks</h3></div>
+    <blockquote data-zh="「大目标 → 小任务 → 磁盘」" data-en='"Big goals → small tasks → disk"' data-is-quote="true">「大目标 → 小任务 → 磁盘」</blockquote>
+    <p data-zh="基于文件的任务图（DAG），支持状态跟踪、依赖关系、持久化。重启后可恢复未完成任务。" data-en="File-based task graph (DAG) with status tracking, dependencies, and persistence.">基于文件的任务图（DAG），支持状态跟踪、依赖关系、持久化。</p>
+  </div>
+
+  <div class="harness-card" id="s08">
+    <div class="hc-header"><span class="hc-num">08</span><h3 data-zh="后台任务 — Background Tasks" data-en="Background Tasks">后台任务 — Background Tasks</h3></div>
+    <blockquote data-zh="「慢操作放后台；代理继续思考」" data-en='"Slow ops in background; agent keeps thinking"' data-is-quote="true">「慢操作放后台；代理继续思考」</blockquote>
+    <p data-zh="守护线程运行命令（<code>LocalShellTask</code>），完成时注入通知。" data-en="Daemon threads run commands (<code>LocalShellTask</code>), inject notifications on completion.">守护线程运行命令（<code>LocalShellTask</code>），完成时注入通知。</p>
+  </div>
+
+  <div class="harness-card" id="s09">
+    <div class="hc-header"><span class="hc-num">09</span><h3 data-zh="代理团队 — Agent Teams" data-en="Agent Teams">代理团队 — Agent Teams</h3></div>
+    <blockquote data-zh="「太大 → 委托给队友」" data-en='"Too big for one → delegate to teammates"' data-is-quote="true">「太大 → 委托给队友」</blockquote>
+    <p data-zh="持久化队友 + 异步邮箱通信。" data-en="Persistent teammates with async mailboxes.">持久化队友 + 异步邮箱通信。</p>
+  </div>
+
+  <div class="harness-card" id="s10">
+    <div class="hc-header"><span class="hc-num">10</span><h3 data-zh="团队协议 — Team Protocols" data-en="Team Protocols">团队协议 — Team Protocols</h3></div>
+    <blockquote data-zh="「共享通信规则」" data-en='"Shared communication rules"' data-is-quote="true">「共享通信规则」</blockquote>
+    <p data-zh="一个请求-响应模式驱动所有代理间协商。" data-en="One request-response pattern drives all inter-agent negotiation.">一个请求-响应模式驱动所有代理间协商。</p>
+  </div>
+
+  <div class="harness-card" id="s11">
+    <div class="hc-header"><span class="hc-num">11</span><h3 data-zh="自主代理 — Autonomous Agents" data-en="Autonomous Agents">自主代理 — Autonomous Agents</h3></div>
+    <blockquote data-zh="「队友自己扫描并认领任务」" data-en='"Teammates scan and claim tasks themselves"' data-is-quote="true">「队友自己扫描并认领任务」</blockquote>
+    <p data-zh="空闲周期 + 自动认领，无需主代理分配。" data-en="Idle cycle + auto-claim, no need for lead to assign.">空闲周期 + 自动认领，无需主代理分配。</p>
+  </div>
+
+  <div class="harness-card" id="s12">
+    <div class="hc-header"><span class="hc-num">12</span><h3 data-zh="Worktree 隔离 — Worktree Isolation" data-en="Worktree Isolation">Worktree 隔离 — Worktree Isolation</h3></div>
+    <blockquote data-zh="「每个代理在自己的目录中工作」" data-en='"Each works in its own directory"' data-is-quote="true">「每个代理在自己的目录中工作」</blockquote>
+    <p data-zh="任务管理目标，worktree 管理目录，通过 ID 绑定。" data-en="Tasks manage goals, worktrees manage directories, bound by ID.">任务管理目标，worktrees 管理目录，通过 ID 绑定。</p>
+  </div>
+</section>
+
+<!-- ==================== Section 3: Skills Deep Dive ==================== -->
+<section id="skills" class="section">
+  <h2 data-zh="🔧 Skills 机制深度分析" data-en="🔧 Skills Mechanism Deep Dive">🔧 Skills 机制深度分析</h2>
+  <p class="section-desc" data-zh="Skills 是 Claude Code 实现「知识按需加载」的核心机制。它允许用户以 SKILL.md 文件的形式定义领域知识，并通过工具调用而非系统提示注入，大幅节省 token。" data-en="Skills are Claude Code's core mechanism for 'knowledge on demand'. They allow defining domain knowledge as SKILL.md files, injected via tool calls instead of system prompts, saving tokens.">Skills 是 Claude Code 实现「知识按需加载」的核心机制。它允许用户以 SKILL.md 文件的形式定义领域知识，并通过工具调用而非系统提示注入，大幅节省 token。</p>
+
+  <!-- Skills Architecture -->
+  <div class="card" id="skills-arch">
+    <h3 data-zh="Skills 架构总览" data-en="Skills Architecture Overview">Skills 架构总览</h3>
+    <div class="arch-box">
+      <div class="arch-row">
+        <div class="arch-node source" data-label="Bundled">内置 Skills<br><small>verify, debug, remember...</small></div>
+        <div class="arch-node source" data-label="Local">本地 Skills<br><small>.claude/skills/</small></div>
+        <div class="arch-node source" data-label="MCP">MCP Skills<br><small>MCP Server 提供</small></div>
+        <div class="arch-node source" data-label="Plugin">插件 Skills<br><small>Marketplace 安装</small></div>
+      </div>
+      <div class="arch-arrow">↓ 统一注册 ↓</div>
+      <div class="arch-row">
+        <div class="arch-node core">Command Registry<br><small>commands.ts — 去重、合并、排序</small></div>
+      </div>
+      <div class="arch-arrow">↓ 系统提示注入（仅元数据）↓</div>
+      <div class="arch-row">
+        <div class="arch-node prompt">Skill Listing in System Reminder<br><small>仅名称 + 描述（≤1% 上下文窗口）</small></div>
+      </div>
+      <div class="arch-arrow">↓ 用户请求匹配 ↓</div>
+      <div class="arch-row">
+        <div class="arch-node invoke">SkillTool 调用<br><small>buildTool() 工厂</small></div>
+      </div>
+      <div class="arch-arrow">↓ 执行模式分支 ↓</div>
+      <div class="arch-row dual">
+        <div class="arch-node exec">
+          <strong>Inline 模式</strong><br>
+          SKILL.md 内容直接注入<br>
+          <code>tool_result</code> → messages[]
+        </div>
+        <div class="arch-node exec">
+          <strong>Fork 模式</strong><br>
+          独立 sub-agent 执行<br>
+          <code>context: 'fork'</code>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Key Concept: Why tool_result not system prompt -->
+  <div class="card" id="skills-vs-prompt">
+    <h3 data-zh="核心区别：tool_result vs 系统提示" data-en="Key Difference: tool_result vs system prompt">核心区别：tool_result vs 系统提示</h3>
+    <div class="compare-table">
+      <table>
+        <thead>
+          <tr>
+            <th data-zh="维度" data-en="Dimension">维度</th>
+            <th data-zh="塞入系统提示" data-en="System Prompt">塞入系统提示</th>
+            <th data-zh="通过 tool_result 注入" data-en="Inject via tool_result">通过 tool_result 注入</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td data-zh="Token 消耗" data-en="Token Cost">Token 消耗</td>
+            <td class="bad">⚠️ 每次请求都消耗</td>
+            <td class="good">✅ 仅调用时消耗</td>
+          </tr>
+          <tr>
+            <td data-zh="上下文占用" data-en="Context Usage">上下文占用</td>
+            <td class="bad">⚠️ 始终占用（可能 10K+ tokens）</td>
+            <td class="good">✅ 仅元数据（~1%）</td>
+          </tr>
+          <tr>
+            <td data-zh="知识更新" data-en="Knowledge Update">知识更新</td>
+            <td class="bad">⚠️ 需重新加载所有 prompt</td>
+            <td class="good">✅ 按需重新加载</td>
+          </tr>
+          <tr>
+            <td data-zh="可扩展性" data-en="Scalability">可扩展性</td>
+            <td class="bad">⚠️ 受上下文窗口限制</td>
+            <td class="good">✅ 无数 Skills（按需加载）</td>
+          </tr>
+          <tr>
+            <td data-zh="权限控制" data-en="Permissions">权限控制</td>
+            <td class="bad">⚠️ 无细粒度控制</td>
+            <td class="good">✅ per-skill 权限 + safe props 白名单</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Skill Sources -->
+  <div class="card" id="skills-sources">
+    <h3 data-zh="四种 Skill 来源" data-en="Four Skill Sources">四种 Skill 来源</h3>
+    <div class="grid-2">
+      <div class="source-card">
+        <div class="src-icon">📦</div>
+        <h4 data-zh="Bundled（内置）" data-en="Bundled">Bundled（内置）</h4>
+        <p data-zh="编译时嵌入 CLI 的 Skills。<code>src/skills/bundled/</code> 目录下，通过 <code>registerBundledSkill()</code> 注册。始终优先保留完整描述。" data-en="Skills embedded at compile time. In <code>src/skills/bundled/</code>, registered via <code>registerBundledSkill()</code>. Always preserved with full descriptions.">Skills 嵌入编译时，在 <code>src/skills/bundled/</code> 目录中。</p>
+        <ul>
+          <li><code>verify</code> — 验证代码变更</li>
+          <li><code>debug</code> — 调试问题</li>
+          <li><code>remember</code> — 记忆审查</li>
+          <li><code>simplify</code> — 简化代码</li>
+          <li><code>batch</code> — 批量处理</li>
+          <li><code>stuck</code> — 卡住时重启</li>
+        </ul>
+      </div>
+      <div class="source-card">
+        <div class="src-icon">📁</div>
+        <h4 data-zh="Local（本地）" data-en="Local">Local（本地）</h4>
+        <p data-zh="用户在项目或全局目录创建的 <code>.md</code> 文件。通过 YAML frontmatter 定义行为。" data-en="User-created <code>.md</code> files in project or global directories. Defined via YAML frontmatter.">用户在项目或全局目录创建的 <code>.md</code> 文件。通过 YAML frontmatter 定义行为。</p>
+        <pre class="code-block"><code># .claude/skills/review.md
+---
+name: review
+description: Review code changes
+allowedTools: [bash, read]
+model: opus
+whenToUse: "When asked to review PRs"
+---
+
+# Code Review Skill
+Review the changes and provide feedback...</code></pre>
+      </div>
+      <div class="source-card">
+        <div class="src-icon">🔌</div>
+        <h4 data-zh="MCP Skills" data-en="MCP Skills">MCP Skills</h4>
+        <p data-zh="通过 Model Context Protocol 服务器提供的 Skills。动态发现，无需本地安装。" data-en="Skills provided via MCP servers. Dynamically discovered, no local installation needed.">通过 MCP 服务器提供的 Skills。动态发现，无需本地安装。</p>
+      </div>
+      <div class="source-card">
+        <div class="src-icon">🧩</div>
+        <h4 data-zh="Plugin（插件）" data-en="Plugin">Plugin（插件）</h4>
+        <p data-zh="从 Marketplace 安装的 Skills。支持权限检查、版本管理、遥测。" data-en="Skills installed from Marketplace. Support permissions, versioning, telemetry.">从 Marketplace 安装的 Skills。支持权限、版本管理、遥测。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Execution Flow -->
+  <div class="card" id="skills-flow">
+    <h3 data-zh="Skill 执行流程" data-en="Skill Execution Flow">Skill 执行流程</h3>
+    <div class="flow-vertical">
+      <div class="flow-step">
+        <div class="fs-num">1</div>
+        <div class="fs-body">
+          <strong data-zh="发现" data-en="Discovery">发现</strong>
+          <p data-zh="系统启动时加载所有 Skills，去重后注册到 Command Registry。名称 + 描述写入系统提示（≤1% 上下文窗口 = ~8K 字符）。" data-en="At startup, load all Skills, deduplicate into Command Registry. Name + description go into system prompt (≤1% context = ~8K chars).">系统启动时加载所有 Skills，去重后注册到 Command Registry。名称 + 描述写入系统提示（≤1% 上下文窗口）。</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="fs-num">2</div>
+        <div class="fs-body">
+          <strong data-zh="匹配" data-en="Matching">匹配</strong>
+          <p data-zh="用户输入后，Claude 在可用 Skills 列表中查找匹配项。匹配依据：<code>whenToUse</code> 描述、用户显式输入 <code>/skillname</code>。" data-en="After user input, Claude searches matching Skills. Match criteria: <code>whenToUse</code> description, explicit <code>/skillname</code>.">用户输入后，Claude 在可用 Skills 列表中查找匹配项。匹配依据：<code>whenToUse</code> 描述、用户显式输入 <code>/skillname</code>。</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="fs-num">3</div>
+        <div class="fs-body">
+          <strong data-zh="权限检查" data-en="Permission Check">权限检查</strong>
+          <p data-zh="三层检查：deny rules（拒绝）→ allow rules（放行）→ safe properties 白名单（自动放行）。最终未命中则 ask 用户。" data-en="Three-layer check: deny rules → allow rules → safe properties whitelist. Default: ask user.">三层检查：deny rules → allow rules → safe properties 白名单。默认 ask 用户。</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="fs-num">4</div>
+        <div class="fs-body">
+          <strong data-zh="内容加载" data-en="Content Loading">内容加载</strong>
+          <p data-zh="加载 SKILL.md 完整内容。处理 YAML frontmatter（移除），执行 <code>!command</code> 替换（shell 命令展开），替换 <code>$ARGUMENTS</code> 占位符。注入 <code>CLAUDE_SKILL_DIR</code> 和 <code>CLAUDE_SESSION_ID</code>。" data-en="Load full SKILL.md. Strip YAML frontmatter, execute <code>!command</code> substitution, replace <code>$ARGUMENTS</code>. Inject <code>CLAUDE_SKILL_DIR</code> and <code>CLAUDE_SESSION_ID</code>.">加载 SKILL.md 完整内容。处理 frontmatter、执行 <code>!command</code> 替换、替换 <code>$ARGUMENTS</code> 占位符。</p>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="fs-num">5</div>
+        <div class="fs-body">
+          <strong data-zh="注入 & 执行" data-en="Inject & Execute">注入 & 执行</strong>
+          <p data-zh="<strong>Inline 模式：</strong>内容作为 <code>createUserMessage({ content, isMeta: true })</code> 直接注入 messages[]。Claude 看到内容后按指令执行。<br><strong>Fork 模式：</strong>在独立 sub-agent 中执行，拥有自己的 token 预算和工具权限。" data-en="<strong>Inline:</strong> inject as <code>createUserMessage({ content, isMeta: true })</code> into messages[]. Claude reads and executes.<br><strong>Fork:</strong> run in isolated sub-agent with own token budget and tool permissions."><strong>Inline 模式：</strong>内容作为 <code>createUserMessage({ content, isMeta: true })</code> 直接注入 messages[]。<br><strong>Fork 模式：</strong>在独立 sub-agent 中执行，拥有自己的 token 预算和工具权限。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Frontmatter Reference -->
+  <div class="card" id="skills-frontmatter">
+    <h3 data-zh="SKILL.md Frontmatter 完整参考" data-en="SKILL.md Frontmatter Reference">SKILL.md Frontmatter 完整参考</h3>
+    <pre class="code-block"><code>---
+# 必填
+name: my-skill              # 技能名称（唯一标识）
+description: "做某事的技能"  # 简短描述
+
+# 可选
+allowedTools: [bash, read]   # 限制可用工具（安全隔离）
+model: opus                  # 模型覆盖（sonnet/opus/haiku/inherit）
+effort: 2                    # 思考深度（0-3）
+whenToUse: "当用户需要 X 时"  # 匹配提示（用于自动发现）
+version: "1.0"               # 版本号
+disableModelInvocation: false # 是否禁止模型自动调用
+context: fork                # 执行模式（inline/fork）
+agent: planAgent             # 使用的代理类型
+paths:                       # 路径匹配（类似 CLAUDE.md 规则）
+  - "src/**"
+  - "tests/**"
+hooks:                       # 生命周期钩子
+  PreToolUse:
+    - matcher: Bash
+      command: "echo before bash"
+---
+
+# My Skill
+
+这是技能内容。支持 Markdown 格式。
+
+## 步骤
+1. 执行 $ARGUMENTS 中指定的操作
+2. 生成报告
+
+## 使用 !command
+!git diff --stat  # 执行 shell 命令并将输出插入
+
+## 变量替换
+${CLAUDE_SKILL_DIR}   # 技能文件所在目录
+${CLAUDE_SESSION_ID}  # 当前会话 ID</code></pre>
+  </div>
+
+  <!-- Budget Control -->
+  <div class="card" id="skills-budget">
+    <h3 data-zh="Budget 控制机制" data-en="Budget Control Mechanism">Budget 控制机制</h3>
+    <p data-zh="Skills 列表占用 ≤1% 上下文窗口（默认 ~8,000 字符）。超过时的处理策略：" data-en="Skill listing uses ≤1% context window (~8,000 chars). Overflow strategy:">Skills 列表占用 ≤1% 上下文窗口（默认 ~8,000 字符）。超过时的处理策略：</p>
+    <div class="budget-steps">
+      <div class="bs">
+        <span class="bs-num">①</span>
+        <span data-zh="Bundled Skills 优先保留完整描述" data-en="Bundled Skills keep full descriptions first">Bundled Skills 优先保留完整描述</span>
+      </div>
+      <div class="bs">
+        <span class="bs-num">②</span>
+        <span data-zh="剩余 budget 分配给非 bundled Skills" data-en="Remaining budget allocated to non-bundled Skills">剩余 budget 分配给非 bundled Skills</span>
+      </div>
+      <div class="bs">
+        <span class="bs-num">③</span>
+        <span data-zh="每个描述最多 250 字符（<code>MAX_LISTING_DESC_CHARS</code>）" data-en="Max 250 chars per description (<code>MAX_LISTING_DESC_CHARS</code>)">每个描述最多 250 字符</span>
+      </div>
+      <div class="bs">
+        <span class="bs-num">④</span>
+        <span data-zh="极端情况：非 bundled 降级为仅名称" data-en="Extreme: non-bundled degrade to names-only">极端情况：非 bundled 降级为仅名称</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Permission System -->
+  <div class="card" id="skills-permissions">
+    <h3 data-zh="Skills 权限系统" data-en="Skills Permission System">Skills 权限系统</h3>
+    <p data-zh="Skills 有独立的三层权限检查，不同于工具的权限系统：" data-en="Skills have a separate three-layer permission check, distinct from tool permissions:">Skills 有独立的三层权限检查，不同于工具的权限系统：</p>
+    <div class="perm-flow">
+      <div class="perm-step deny">
+        <strong>1. Deny Rules</strong>
+        <p data-zh="用户配置的拒绝规则。支持精确匹配和前缀匹配（<code>review:*</code>）。" data-en="User-configured deny rules. Exact match and prefix match (<code>review:*</code>).">用户配置的拒绝规则。支持精确匹配和前缀匹配（<code>review:*</code>）。</p>
+      </div>
+      <div class="perm-step allow">
+        <strong>2. Allow Rules</strong>
+        <p data-zh="用户配置的允许规则。匹配则直接放行。" data-en="User-configured allow rules. Matching rules auto-allow.">用户配置的允许规则。匹配则直接放行。</p>
+      </div>
+      <div class="perm-step auto">
+        <strong>3. Safe Properties Whitelist</strong>
+        <p data-zh="如果 Skill 仅包含安全属性（name, description, model 等），自动放行。新增属性默认要求权限。" data-en="If a Skill only contains safe properties (name, description, model, etc.), auto-allow. New properties default to requiring permission.">如果 Skill 仅包含安全属性（name, description, model 等），自动放行。新增属性默认要求权限。</p>
+      </div>
+      <div class="perm-step ask">
+        <strong>4. Ask User</strong>
+        <p data-zh="以上都不匹配 → 弹出权限请求，用户可选择临时/永久放行。" data-en="None matched → show permission prompt. User can allow once or always.">以上都不匹配 → 弹出权限请求，用户可选择临时/永久放行。</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLAUDE.md Integration -->
+  <div class="card" id="claude-md">
+    <h3 data-zh="CLAUDE.md 集成" data-en="CLAUDE.md Integration">CLAUDE.md 集成</h3>
+    <p data-zh="Skills 机制与 CLAUDE.md 紧密配合。CLAUDE.md 提供项目上下文，Skills 提供可执行能力：" data-en="Skills integrate closely with CLAUDE.md. CLAUDE.md provides project context, Skills provide executable capabilities:">Skills 机制与 CLAUDE.md 紧密配合。CLAUDE.md 提供项目上下文，Skills 提供可执行能力：</p>
+    <table class="data-table">
+      <thead>
+        <tr><th data-zh="文件" data-en="File">文件</th><th data-zh="类型" data-en="Type">类型</th><th data-zh="注入方式" data-en="Injection">注入方式</th><th data-zh="何时加载" data-en="When">何时加载</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>CLAUDE.md</code></td><td data-zh="项目上下文" data-en="Project context">项目上下文</td><td data-zh="系统提示" data-en="System prompt">系统提示</td><td data-zh="启动时" data-en="Startup">启动时</td></tr>
+        <tr><td><code>CLAUDE.local.md</code></td><td data-zh="个人配置" data-en="Personal config">个人配置</td><td data-zh="系统提示" data-en="System prompt">系统提示</td><td data-zh="启动时" data-en="Startup">启动时</td></tr>
+        <tr><td><code>SKILL.md</code></td><td data-zh="可执行技能" data-en="Executable skill">可执行技能</td><td data-zh="tool_result（按需）" data-en="tool_result (on demand)">tool_result（按需）</td><td data-zh="调用时" data-en="On invocation">调用时</td></tr>
+        <tr><td><code>memdir/</code></td><td data-zh="持久化记忆" data-en="Persistent memory">持久化记忆</td><td data-zh="附件（附件消息）" data-en="Attachment messages">附件消息</td><td data-zh="相关时自动" data-en="Auto when relevant">相关时自动</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ==================== Section 4: Design Patterns ==================== -->
+<section id="patterns" class="section">
+  <h2 data-zh="核心设计模式" data-en="Core Design Patterns">核心设计模式</h2>
+  <div class="card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th data-zh="模式" data-en="Pattern">模式</th>
+          <th data-zh="位置" data-en="Where">位置</th>
+          <th data-zh="用途" data-en="Purpose">用途</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>AsyncGenerator 流式</strong></td><td><code>QueryEngine</code>, <code>query()</code></td><td data-zh="全链路流式从 API 到消费者" data-en="Full-chain streaming from API to consumer">全链路流式从 API 到消费者</td></tr>
+        <tr><td><strong>Builder + Factory</strong></td><td><code>buildTool()</code></td><td data-zh="工具定义安全默认值注入" data-en="Safe defaults for tool definitions">工具定义安全默认值注入</td></tr>
+        <tr><td><strong>Branded Types</strong></td><td><code>SystemPrompt</code></td><td data-zh="防止 string/array 类型混淆" data-en="Prevent string/array confusion">防止 string/array 类型混淆</td></tr>
+        <tr><td><strong>Feature Flags + DCE</strong></td><td><code>feature()</code> from <code>bun:bundle</code></td><td data-zh="编译时死代码消除" data-en="Compile-time dead code elimination">编译时死代码消除</td></tr>
+        <tr><td><strong>Discriminated Unions</strong></td><td><code>Message</code> types</td><td data-zh="类型安全的消息处理" data-en="Type-safe message handling">类型安全的消息处理</td></tr>
+        <tr><td><strong>Observer + State Machine</strong></td><td><code>StreamingToolExecutor</code></td><td data-zh="工具执行生命周期跟踪" data-en="Tool execution lifecycle tracking">工具执行生命周期跟踪</td></tr>
+        <tr><td><strong>Snapshot State</strong></td><td><code>FileHistoryState</code></td><td data-zh="文件操作撤销/重做" data-en="Undo/redo for file operations">文件操作撤销/重做</td></tr>
+        <tr><td><strong>Ring Buffer</strong></td><td>Error log</td><td data-zh="长会话有界内存" data-en="Bounded memory for long sessions">长会话有界内存</td></tr>
+        <tr><td><strong>Fire-and-Forget Write</strong></td><td><code>recordTranscript()</code></td><td data-zh="非阻塞持久化（带排序保证）" data-en="Non-blocking persistence with ordering">非阻塞持久化</td></tr>
+        <tr><td><strong>Lazy Schema</strong></td><td><code>lazySchema()</code></td><td data-zh="延迟 Zod 模式求值" data-en="Defer Zod schema evaluation">延迟 Zod 模式求值</td></tr>
+        <tr><td><strong>Context Isolation</strong></td><td><code>AsyncLocalStorage</code></td><td data-zh="共享进程中的代理上下文隔离" data-en="Per-agent context in shared process">共享进程中的代理上下文隔离</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ==================== Section 5: Key Files ==================== -->
+<section id="files" class="section">
+  <h2 data-zh="关键文件索引" data-en="Key File Index">关键文件索引</h2>
+  <div class="card">
+    <h3 data-zh="Harness 核心" data-en="Harness Core">Harness 核心</h3>
+    <div class="file-index">
+      <div class="fi"><code>src/query.ts</code> <span data-zh="主循环 (1729行)" data-en="Main loop (1729 lines)">主循环 (1729行)</span></div>
+      <div class="fi"><code>src/QueryEngine.ts</code> <span data-zh="查询引擎主类" data-en="Query engine class">查询引擎主类</span></div>
+      <div class="fi"><code>src/Tool.ts</code> <span data-zh="工具基类 + buildTool() 工厂" data-en="Tool base + buildTool() factory">工具基类 + buildTool() 工厂</span></div>
+      <div class="fi"><code>src/bridge/bridgeMain.ts</code> <span data-zh="桥接主入口" data-en="Bridge main entry">桥接主入口</span></div>
+      <div class="fi"><code>src/coordinator/coordinatorMode.ts</code> <span data-zh="协调器模式" data-en="Coordinator mode">协调器模式</span></div>
+    </div>
+
+    <h3 data-zh="Skills 系统" data-en="Skills System">Skills 系统</h3>
+    <div class="file-index">
+      <div class="fi"><code>src/tools/SkillTool/SkillTool.ts</code> <span data-zh="SkillTool 实现 (500+行)" data-en="SkillTool impl (500+ lines)">SkillTool 实现 (500+行)</span></div>
+      <div class="fi"><code>src/tools/SkillTool/prompt.ts</code> <span data-zh="Skill 提示 + 预算控制" data-en="Skill prompt + budget control">Skill 提示 + 预算控制</span></div>
+      <div class="fi"><code>src/skills/loadSkillsDir.ts</code> <span data-zh="从目录加载 Skills" data-en="Load Skills from directory">从目录加载 Skills</span></div>
+      <div class="fi"><code>src/skills/bundledSkills.ts</code> <span data-zh="Bundled Skill 注册" data-en="Bundled Skill registration">Bundled Skill 注册</span></div>
+      <div class="fi"><code>src/skills/bundled/index.ts</code> <span data-zh="内置 Skills 初始化" data-en="Built-in Skills init">内置 Skills 初始化</span></div>
+      <div class="fi"><code>src/commands/skills/skills.tsx</code> <span data-zh="/skills 命令 UI" data-en="/skills command UI">/skills 命令 UI</span></div>
+      <div class="fi"><code>src/skills/mcpSkillBuilders.ts</code> <span data-zh="MCP Skill 构建器" data-en="MCP Skill builders">MCP Skill 构建器</span></div>
+    </div>
+
+    <h3 data-zh="子代理" data-en="Sub-Agents">子代理</h3>
+    <div class="file-index">
+      <div class="fi"><code>src/tools/AgentTool/runAgent.ts</code> <span data-zh="子代理运行器" data-en="Sub-agent runner">子代理运行器</span></div>
+      <div class="fi"><code>src/tools/AgentTool/forkSubagent.ts</code> <span data-zh="子代理分叉" data-en="Sub-agent fork">子代理分叉</span></div>
+    </div>
+
+    <h3 data-zh="文档报告" data-en="Documentation">文档报告</h3>
+    <div class="file-index">
+      <div class="fi"><code>docs/en/01-telemetry-and-privacy.md</code> <span data-zh="遥测与隐私" data-en="Telemetry & Privacy">遥测与隐私</span></div>
+      <div class="fi"><code>docs/zh/01-遥测与隐私分析.md</code> <span data-zh="遥测与隐私（中文）" data-en="Telemetry (ZH)">遥测与隐私（中文）</span></div>
+      <div class="fi"><code>docs/en/04-remote-control-and-killswitches.md</code> <span data-zh="远程控制与紧急开关" data-en="Remote Control">远程控制与紧急开关</span></div>
+      <div class="fi"><code>docs/en/05-future-roadmap.md</code> <span data-zh="未来路线图" data-en="Future Roadmap">未来路线图</span></div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <p>Source code &copy; Anthropic and Claude. Analysis for educational purposes only.</p>
+  <p data-zh="基于 @anthropic-ai/claude-code v2.1.88 源码分析" data-en="Based on @anthropic-ai/claude-code v2.1.88 source analysis">基于 @anthropic-ai/claude-code v2.1.88 源码分析</p>
+</footer>
+
+<script src="docs/js/app.js"></script>
+</body>
+</html>
