@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     renderMechanismCards();
     initCodeTabs();
+    initEnhancedCodeBlocks();
 
     document.querySelectorAll('nav a').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
@@ -102,6 +103,79 @@ function initCodeTabs() {
                     }
                 });
             });
+        });
+    });
+}
+
+function initEnhancedCodeBlocks() {
+    document.querySelectorAll('.code-block-new').forEach(block => {
+        const tabs = block.querySelectorAll('.code-block-tab');
+        const panels = block.querySelectorAll('.code-block-panel');
+        const copyBtn = block.querySelector('.copy-btn');
+        const fullscreenBtn = block.querySelector('.fullscreen-btn');
+        
+        // 初始化标签切换
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const lang = this.dataset.lang;
+                
+                // 更新标签状态
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // 更新面板状态
+                panels.forEach(panel => {
+                    if (panel.dataset.lang === lang) {
+                        panel.classList.add('active');
+                    } else {
+                        panel.classList.remove('active');
+                    }
+                });
+            });
+        });
+        
+        // 复制按钮
+        if (copyBtn) {
+            copyBtn.addEventListener('click', function() {
+                const activePanel = block.querySelector('.code-block-panel.active');
+                if (activePanel) {
+                    const code = activePanel.textContent;
+                    navigator.clipboard.writeText(code).then(() => {
+                        const originalText = this.textContent;
+                        this.textContent = '✅ 已复制';
+                        setTimeout(() => {
+                            this.textContent = originalText;
+                        }, 2000);
+                    });
+                }
+            });
+        }
+        
+        // 全屏按钮
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', function() {
+                block.classList.toggle('fullscreen');
+                if (block.classList.contains('fullscreen')) {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = '';
+                }
+            });
+        }
+        
+        // 添加行号
+        panels.forEach(panel => {
+            const codeEl = panel.querySelector('code');
+            if (codeEl && !panel.querySelector('.code-lines')) {
+                const code = codeEl.textContent;
+                const lines = code.split('\n');
+                let html = '';
+                lines.forEach((line, index) => {
+                    const lineNumber = index + 1;
+                    html += `<div class="code-line"><span class="line-number">${lineNumber}</span><span class="line-content">${line}</span></div>`;
+                });
+                panel.innerHTML = `<div class="code-lines">${html}</div>`;
+            }
         });
     });
 }
