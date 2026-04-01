@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机制 2: 工具分发 - Claude Code Harness Engineering</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/mechanism.css">
+</head>
+<body>
+    <header>
+        <h1>🔧 机制 2: 工具分发</h1>
+        <p>"添加工具 = 添加一个处理器"</p>
+        <nav>
+            <a href="../index.html">← 返回首页</a>
+            <a href="#overview">概述</a>
+            <a href="#architecture">架构设计</a>
+            <a href="#implementation">实现细节</a>
+            <a href="#examples">代码示例</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="overview">
+            <h2>🎯 概述</h2>
+            <div class="concept">
+                <p><strong>工具分发系统</strong> 是 Claude Code 的扩展性核心。它通过一个统一的注册和分发机制，让新工具可以轻松集成。</p>
+                <p><strong>核心理念：</strong></p>
+                <ul>
+                    <li>📦 <strong>标准化接口</strong>：所有工具遵循相同的接口</li>
+                    <li>🔌 <strong>即插即用</strong>：注册即可使用，无需修改核心循环</li>
+                    <li>🛡️ <strong>安全默认</strong>：buildTool() 工厂提供安全默认值</li>
+                    <li>📊 <strong>统一管理</strong>：工具的生命周期统一管理</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="architecture">
+            <h2>🏗️ 架构设计</h2>
+            <div class="mermaid">
+                graph LR
+                    A[工具定义] --> B[buildTool]
+                    B --> C[工具注册表]
+                    C --> D[工具分发器]
+                    D --> E[权限检查]
+                    E --> F[工具执行]
+                    F --> G[结果处理]
+            </div>
+        </section>
+
+        <section id="implementation">
+            <h2>⚙️ 实现细节</h2>
+            <div class="code-block">
+                <h3>Tool.ts - 工具接口定义</h3>
+                <pre><code>interface Tool {
+    name: string;
+    description: string;
+    parameters: JSONSchema;
+    execute: (params: any) => Promise<any>;
+}
+
+interface ToolDefinition {
+    name: string;
+    description: string;
+    parameters: JSONSchema;
+    execute: (params: any) => Promise<any>;
+    permissions?: Permission[];
+    timeout?: number;
+}</code></pre>
+            </div>
+
+            <div class="code-block">
+                <h3>buildTool() - 工具工厂</h3>
+                <pre><code>function buildTool(definition: ToolDefinition): Tool {
+    return {
+        name: definition.name,
+        description: definition.description,
+        parameters: definition.parameters,
+        execute: async (params) => {
+            // 1. 权限检查
+            if (definition.permissions) {
+                await checkPermissions(definition.name, params);
+            }
+            
+            // 2. 超时控制
+            if (definition.timeout) {
+                return await executeWithTimeout(
+                    definition.execute,
+                    params,
+                    definition.timeout
+                );
+            }
+            
+            // 3. 执行工具
+            return await definition.execute(params);
+        }
+    };
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="examples">
+            <h2>📚 代码示例</h2>
+            <div class="code-block">
+                <h3>注册自定义工具</h3>
+                <pre><code>// 1. 定义工具
+const myTool: ToolDefinition = {
+    name: "my_custom_tool",
+    description: "这是一个自定义工具",
+    parameters: {
+        type: "object",
+        properties: {
+            input: { type: "string" }
+        },
+        required: ["input"]
+    },
+    execute: async (params) => {
+        return { result: `处理: ${params.input}` };
+    }
+};
+
+// 2. 注册工具
+registerTool(myTool);
+
+// 3. 工具现在可以被 Claude 使用了</code></pre>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p><a href="../index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
+    </footer>
+</body>
+</html>

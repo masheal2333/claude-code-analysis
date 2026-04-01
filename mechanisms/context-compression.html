@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机制 6: 上下文压缩 - Claude Code Harness Engineering</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/mechanism.css">
+</head>
+<body>
+    <header>
+        <h1>📦 机制 6: 上下文压缩</h1>
+        <p>"上下文满了；腾出空间"</p>
+        <nav>
+            <a href="../index.html">← 返回首页</a>
+            <a href="#overview">概述</a>
+            <a href="#strategies">压缩策略</a>
+            <a href="#implementation">实现细节</a>
+            <a href="#triggers">触发条件</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="overview">
+            <h2>🎯 概述</h2>
+            <div class="concept">
+                <p><strong>上下文压缩</strong> 是 Claude Code 的内存管理机制。当对话历史太长时，它会自动压缩以释放空间。</p>
+                <p><strong>核心策略：</strong></p>
+                <ul>
+                    <li>📝 <strong>自动摘要</strong>：将长对话压缩为摘要</li>
+                    <li>✂️ <strong>智能修剪</strong>：删除不重要的历史</li>
+                    <li>🗜️ <strong>上下文折叠</strong>：折叠已完成的子任务</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="strategies">
+            <h2>📊 压缩策略</h2>
+            <div class="strategy-list">
+                <div class="strategy-item">
+                    <h3>1. AutoCompact (自动摘要)</h3>
+                    <p><strong>原理：</strong>使用 LLM 生成对话摘要</p>
+                    <p><strong>触发：</strong>Token 使用达到阈值</p>
+                    <p><strong>效果：</strong>保留关键信息，压缩详细内容</p>
+                </div>
+                
+                <div class="strategy-item">
+                    <h3>2. SnipCompact (智能修剪)</h3>
+                    <p><strong>原理：</strong>删除已完成的工具调用结果</p>
+                    <p><strong>触发：</strong>工具调用完成后</p>
+                    <p><strong>效果：</strong>减少冗余信息</p>
+                </div>
+                
+                <div class="strategy-item">
+                    <h3>3. ContextCollapse (上下文折叠)</h3>
+                    <p><strong>原理：</strong>折叠已完成的子代理任务</p>
+                    <p><strong>触发：</strong>子代理任务完成</p>
+                    <p><strong>效果：</strong>保持主对话简洁</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="implementation">
+            <h2>⚙️ 实现细节</h2>
+            <div class="code-block">
+                <h3>services/compact/ - 压缩服务</h3>
+                <pre><code>interface CompressionStrategy {
+  name: string;
+  shouldCompress: (context: Context) => boolean;
+  compress: (messages: Message[]) => Promise<Message[]>;
+}
+
+// 注册压缩策略
+registerCompressionStrategy({
+  name: "autoCompact",
+  shouldCompress: (context) => {
+    return context.tokenCount > THRESHOLD;
+  },
+  compress: async (messages) => {
+    // 使用 LLM 生成摘要
+    const summary = await generateSummary(messages);
+    return [{
+      role: "system",
+      content: `对话摘要: ${summary}`
+    }];
+  }
+});</code></pre>
+            </div>
+        </section>
+
+        <section id="triggers">
+            <h2>⚡ 触发条件</h2>
+            <div class="trigger-list">
+                <ul>
+                    <li>📊 <strong>Token 阈值</strong>：当 Token 使用达到 80% 时触发</li>
+                    <li>✅ <strong>任务完成</strong>：子任务完成后折叠上下文</li>
+                    <li>🔄 <strong>定期压缩</strong>：每 N 轮对话后自动压缩</li>
+                    <li>💾 <strong>内存不足</strong>：系统内存不足时触发</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p><a href="../index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
+    </footer>
+</body>
+</html>

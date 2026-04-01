@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机制 4: 子代理 - Claude Code Harness Engineering</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/mechanism.css">
+</head>
+<body>
+    <header>
+        <h1>👥 机制 4: 子代理</h1>
+        <p>"分解大任务；清理每个子任务的上下文"</p>
+        <nav>
+            <a href="../index.html">← 返回首页</a>
+            <a href="#overview">概述</a>
+            <a href="#implementation">实现细节</a>
+            <a href="#isolation">上下文隔离</a>
+            <a href="#examples">使用示例</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="overview">
+            <h2>🎯 概述</h2>
+            <div class="concept">
+                <p><strong>子代理系统</strong> 允许 Claude 创建独立的子代理来处理特定任务。每个子代理有自己的消息历史，保持主对话干净。</p>
+                <p><strong>核心特性：</strong></p>
+                <ul>
+                    <li>🔀 <strong>任务分解</strong>：将大任务拆分为小任务</li>
+                    <li>🧹 <strong>上下文隔离</strong>：子代理有独立的消息历史</li>
+                    <li>📊 <strong>结果聚合</strong>：子代理结果返回给主代理</li>
+                    <li>⚡ <strong>并行执行</strong>：多个子代理可以并行工作</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="implementation">
+            <h2>⚙️ 实现细节</h2>
+            <div class="code-block">
+                <h3>AgentTool - 子代理工具</h3>
+                <pre><code>interface AgentToolParams {
+  task: string;           // 子代理任务描述
+  context?: string;       // 额外上下文
+  model?: string;         // 使用的模型
+  maxTokens?: number;     // 最大 Token 数
+}
+
+async function executeAgentTool(params: AgentToolParams) {
+  // 1. 创建新的消息历史
+  const messages = [];
+  
+  // 2. 添加任务描述
+  messages.push({
+    role: "user",
+    content: params.task
+  });
+  
+  // 3. 创建子代理上下文
+  const agentContext = createAgentContext({
+    parentAgentId: currentAgentId,
+    taskId: generateTaskId()
+  });
+  
+  // 4. 执行子代理
+  const result = await runAgent({
+    messages,
+    context: agentContext,
+    model: params.model
+  });
+  
+  return result;
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="isolation">
+            <h2>🧹 上下文隔离</h2>
+            <div class="isolation-diagram">
+                <pre>
+主代理
+├── 消息历史: [msg1, msg2, msg3, ...]
+├── 工具调用: [tool1, tool2, ...]
+└── 状态: { ... }
+    │
+    ├── 子代理 1
+    │   ├── 消息历史: [sub_msg1, sub_msg2, ...]  ← 独立！
+    │   ├── 工具调用: [sub_tool1, ...]
+    │   └── 状态: { ... }
+    │
+    └── 子代理 2
+        ├── 消息历史: [sub_msg1, sub_msg2, ...]  ← 独立！
+        ├── 工具调用: [sub_tool1, ...]
+        └── 状态: { ... }
+                </pre>
+            </div>
+        </section>
+
+        <section id="examples">
+            <h2>📚 使用示例</h2>
+            <div class="code-block">
+                <h3>使用子代理处理多个文件</h3>
+                <pre><code>// 主代理可以创建多个子代理并行处理
+const results = await Promise.all([
+  // 子代理 1: 分析文件 A
+  executeAgentTool({
+    task: "分析 fileA.ts 的代码结构",
+    context: "需要识别所有函数和类"
+  }),
+  
+  // 子代理 2: 分析文件 B
+  executeAgentTool({
+    task: "分析 fileB.ts 的代码结构",
+    context: "需要识别所有函数和类"
+  })
+]);
+
+// 主代理聚合结果
+const aggregated = aggregateResults(results);</code></pre>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p><a href="../index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
+    </footer>
+</body>
+</html>

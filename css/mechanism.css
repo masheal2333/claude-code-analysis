@@ -1,0 +1,180 @@
+/* 机制页面专属样式 */
+
+.concept {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+    margin-bottom: 2rem;
+}
+
+.concept ul {
+    margin: 1rem 0;
+    padding-left: 1.2rem;
+}
+
+.flow-diagram {
+    background: #2c3e50;
+    color: #ecf0f1;
+    padding: 1.5rem;
+    border-radius: 8px;
+    font-family: monospace;
+    line-height: 1.6;
+    overflow-x: auto;
+}
+
+.isolation-diagram {
+    background: #34495e;
+    color: #ecf0f1;
+    padding: 1.5rem;
+    border-radius: 8px;
+    font-family: monospace;
+    line-height: 1.6;
+}
+
+.comparison-table table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    background: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.comparison-table th,
+.comparison-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+.comparison-table th {
+    background: #3498db;
+    color: white;
+}
+
+.tool-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.tool-item {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #9b59b6;
+}
+
+.tool-item h3 {
+    margin: 0 0 0.5rem 0;
+    color: #2c3e50;
+}
+
+.benefits-list ul {
+    background: #e8f5e9;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #27ae60;
+}
+
+.strategy-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.strategy-item {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #e74c3c;
+}
+
+.communication-diagram {
+    background: #f1c40f;
+    color: #2c3e50;
+    padding: 1.5rem;
+    border-radius: 8px;
+    font-family: monospace;
+    line-height: 1.6;
+}
+
+.protocol-example {
+    background: #2c3e50;
+    color: #ecf0f1;
+    padding: 1.5rem;
+    border-radius: 8px;
+    font-family: monospace;
+    line-height: 1.6;
+}
+
+.security-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.security-item {
+    background: #e8f5e9;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #27ae60;
+}
+
+.danger-item {
+    background: #ffebee;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #e74c3c;
+}
+
+.claude-md-info {
+    background: #e3f2fd;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #2196f3;
+}
+
+.trigger-list ul {
+    background: #fff3e0;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #ff9800;
+}
+
+.use-case {
+    background: #f3e5f5;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    border-left: 4px solid #9c27b0;
+}
+
+.api-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.api-item {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    border-left: 4px solid #00bcd4;
+}
+
+.insight {
+    background: #fce4ec;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #e91e63;
+}

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机制 7: 持久化任务 - Claude Code Harness Engineering</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/mechanism.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>💾 机制 7: 持久化任务</h1>
+        <p>"大目标 → 小任务 → 磁盘"</p>
+        <nav>
+            <a href="../index.html">← 返回首页</a>
+            <a href="#overview">概述</a>
+            <a href="#implementation">实现细节</a>
+            <a href="#data-model">数据模型</a>
+            <a href="#api">API 接口</a>
+            <a href="#use-cases">使用场景</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="overview">
+            <h2>🎯 概述</h2>
+            <div class="concept">
+                <p><strong>持久化任务系统</strong> 是 Claude Code 的任务管理核心，它将复杂的工作分解为可管理的小任务，并将它们持久化到磁盘。</p>
+                <p><strong>核心特性：</strong></p>
+                <ul>
+                    <li>📦 <strong>任务分解</strong>：将大目标拆分为小任务</li>
+                    <li>💾 <strong>状态持久化</strong>：任务状态保存到磁盘，支持重启恢复</li>
+                    <li>🔗 <strong>依赖管理</strong>：支持任务之间的依赖关系</li>
+                    <li>📊 <strong>进度跟踪</strong>：实时跟踪任务执行进度</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="implementation">
+            <h2>⚙️ 实现细节</h2>
+            <div class="code-block">
+                <h3>TaskCreate - 创建任务</h3>
+                <pre><code>interface TaskCreateParams {
+  title: string;
+  description?: string;
+  priority?: 'high' | 'medium' | 'low';
+  dependencies?: string[];  // 依赖的任务 ID
+  estimatedTime?: number;   // 预估时间（分钟）
+}
+
+async function createTask(params: TaskCreateParams): Promise&lt;Task&gt; {
+  // 1. 验证参数
+  validateTaskParams(params);
+  
+  // 2. 生成唯一 ID
+  const taskId = generateTaskId();
+  
+  // 3. 构建任务对象
+  const task: Task = {
+    id: taskId,
+    title: params.title,
+    description: params.description,
+    status: 'pending',
+    priority: params.priority || 'medium',
+    dependencies: params.dependencies || [],
+    createdAt: new Date(),
+    updatedAt: new Date()
+  };
+  
+  // 4. 持久化到磁盘
+  await saveTaskToDisk(task);
+  
+  return task;
+}</code></pre>
+            </div>
+
+            <div class="code-block">
+                <h3>TaskUpdate - 更新任务状态</h3>
+                <pre><code>interface TaskUpdateParams {
+  taskId: string;
+  status?: 'pending' | 'in_progress' | 'completed' | 'blocked';
+  progress?: number;  // 0-100
+  notes?: string;
+}
+
+async function updateTask(params: TaskUpdateParams): Promise&lt;Task&gt; {
+  // 1. 加载现有任务
+  const existingTask = await loadTaskFromDisk(params.taskId);
+  
+  // 2. 检查状态转换是否合法
+  validateStatusTransition(existingTask.status, params.status);
+  
+  // 3. 更新任务
+  const updatedTask = {
+    ...existingTask,
+    ...params,
+    updatedAt: new Date()
+  };
+  
+  // 4. 保存到磁盘
+  await saveTaskToDisk(updatedTask);
+  
+  // 5. 触发状态变更事件
+  await emitTaskUpdateEvent(updatedTask);
+  
+  return updatedTask;
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="data-model">
+            <h2>📊 数据模型</h2>
+            <div class="mermaid">
+                classDiagram
+                    class Task {
+                        +string id
+                        +string title
+                        +string description
+                        +string status
+                        +string priority
+                        +string[] dependencies
+                        +number progress
+                        +Date createdAt
+                        +Date updatedAt
+                        +Date completedAt
+                    }
+                    
+                    class TaskDependency {
+                        +string taskId
+                        +string dependsOnId
+                        +string type
+                    }
+                    
+                    class TaskEvent {
+                        +string eventId
+                        +string taskId
+                        +string eventType
+                        +Date timestamp
+                        +any data
+                    }
+                    
+                    Task "1" -- "*" TaskDependency : has
+                    Task "1" -- "*" TaskEvent : generates
+            </div>
+        </section>
+
+        <section id="api">
+            <h2>🔌 API 接口</h2>
+            <div class="api-list">
+                <div class="api-item">
+                    <h3>TaskCreate</h3>
+                    <p><strong>用途：</strong>创建新任务</p>
+                    <p><strong>参数：</strong>title, description, priority, dependencies</p>
+                    <p><strong>返回：</strong>Task 对象</p>
+                </div>
+                
+                <div class="api-item">
+                    <h3>TaskUpdate</h3>
+                    <p><strong>用途：</strong>更新任务状态</p>
+                    <p><strong>参数：</strong>taskId, status, progress, notes</p>
+                    <p><strong>返回：</strong>更新后的 Task</p>
+                </div>
+                
+                <div class="api-item">
+                    <h3>TaskGet</h3>
+                    <p><strong>用途：</strong>获取单个任务详情</p>
+                    <p><strong>参数：</strong>taskId</p>
+                    <p><strong>返回：</strong>Task 对象</p>
+                </div>
+                
+                <div class="api-item">
+                    <h3>TaskList</h3>
+                    <p><strong>用途：</strong>列出所有任务</p>
+                    <p><strong>参数：</strong>filter, sort, limit</p>
+                    <p><strong>返回：</strong>Task[] 数组</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="use-cases">
+            <h2>📚 使用场景</h2>
+            <div class="use-case">
+                <h3>场景 1: 大型重构任务</h3>
+                <div class="code-block">
+                    <pre><code>// 1. 创建主任务
+const mainTask = await createTask({
+  title: "重构用户认证模块",
+  description: "将旧的 session-based 认证迁移到 JWT",
+  priority: "high"
+});
+
+// 2. 创建子任务
+const subTask1 = await createTask({
+  title: "创建 JWT 工具类",
+  dependencies: [mainTask.id]
+});
+
+const subTask2 = await createTask({
+  title: "修改登录接口",
+  dependencies: [subTask1.id]
+});
+
+// 3. 更新进度
+await updateTask({
+  taskId: subTask1.id,
+  status: "in_progress",
+  progress: 50
+});</code></pre>
+                </div>
+            </div>
+            
+            <div class="use-case">
+                <h3>场景 2: 跨会话任务</h3>
+                <p>任务持久化到磁盘意味着：</p>
+                <ul>
+                    <li>✅ 重启 Claude Code 后可以继续</li>
+                    <li>✅ 不同会话可以协作处理同一任务</li>
+                    <li>✅ 任务历史可以追溯</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p><a href="../index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
+    </footer>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+</html>

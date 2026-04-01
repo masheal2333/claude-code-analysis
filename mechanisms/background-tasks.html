@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机制 8: 后台任务 - Claude Code Harness Engineering</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/mechanism.css">
+</head>
+<body>
+    <header>
+        <h1>⏰ 机制 8: 后台任务</h1>
+        <p>"慢操作在后台；代理保持思考"</p>
+        <nav>
+            <a href="../index.html">← 返回首页</a>
+            <a href="#overview">概述</a>
+            <a href="#implementation">实现细节</a>
+            <a href="#examples">使用示例</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="overview">
+            <h2>🎯 概述</h2>
+            <div class="concept">
+                <p><strong>后台任务系统</strong> 允许 Claude 在后台执行耗时操作，同时保持主对话的响应能力。</p>
+                <p><strong>核心特性：</strong></p>
+                <ul>
+                    <li>🔄 <strong>非阻塞</strong>：耗时操作在后台执行</li>
+                    <li>🔔 <strong>完成通知</strong>：任务完成时自动通知</li>
+                    <li>📊 <strong>进度跟踪</strong>：实时跟踪后台任务进度</li>
+                    <li>⚡ <strong>并行执行</strong>：多个后台任务可以并行</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="implementation">
+            <h2>⚙️ 实现细节</h2>
+            <div class="code-block">
+                <h3>DreamTask - 后台任务</h3>
+                <pre><code>interface DreamTaskParams {
+  task: string;
+  callback?: (result: any) => void;
+  timeout?: number;
+}
+
+async function executeDreamTask(params: DreamTaskParams) {
+  // 1. 创建后台任务
+  const taskId = generateTaskId();
+  
+  // 2. 启动守护线程
+  startDaemonThread(taskId, async () => {
+    // 3. 执行耗时操作
+    const result = await executeLongRunningTask(params.task);
+    
+    // 4. 任务完成，注入通知
+    await injectCompletionNotification(taskId, result);
+    
+    // 5. 调用回调函数
+    if (params.callback) {
+      params.callback(result);
+    }
+  });
+  
+  return taskId;
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="examples">
+            <h2>📚 使用示例</h2>
+            <div class="code-block">
+                <h3>后台执行测试</h3>
+                <pre><code>// 1. 启动后台测试任务
+const taskId = await executeDreamTask({
+  task: "运行所有单元测试",
+  callback: (result) => {
+    console.log("测试完成:", result);
+  }
+});
+
+// 2. 主对话可以继续处理其他任务
+console.log("测试已在后台启动，任务 ID:", taskId);
+
+// 3. 当测试完成时，会自动收到通知</code></pre>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p><a href="../index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
+    </footer>
+</body>
+</html>

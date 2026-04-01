@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机制 5: 知识按需加载 - Claude Code Harness Engineering</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/mechanism.css">
+</head>
+<body>
+    <header>
+        <h1>📚 机制 5: 知识按需加载</h1>
+        <p>"需要时加载知识"</p>
+        <nav>
+            <a href="../index.html">← 返回首页</a>
+            <a href="#overview">概述</a>
+            <a href="#vs-prompt">vs System Prompt</a>
+            <a href="#implementation">实现细节</a>
+            <a href="#claude-md">CLAUDE.md 机制</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="overview">
+            <h2>🎯 概述</h2>
+            <div class="concept">
+                <p><strong>知识按需加载</strong> 是 Claude Code 的核心创新。它通过 <code>tool_result</code> 注入知识，而不是放在系统提示中。</p>
+                <p><strong>核心优势：</strong></p>
+                <ul>
+                    <li>💰 <strong>节省 Token</strong>：只在需要时加载，不占用系统提示</li>
+                    <li>🔄 <strong>动态更新</strong>：知识可以随时更新，无需重启</li>
+                    <li>🎯 <strong>精准加载</strong>：根据目录和上下文加载相关知识</li>
+                    <li>📦 <strong>模块化</strong>：知识被封装为独立的 Skill</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="vs-prompt">
+            <h2>⚡ vs System Prompt</h2>
+            <div class="comparison-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>特性</th>
+                            <th>System Prompt</th>
+                            <th>知识按需加载</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>加载时机</td>
+                            <td>始终加载</td>
+                            <td>按需触发</td>
+                        </tr>
+                        <tr>
+                            <td>Token 消耗</td>
+                            <td>每轮对话都消耗</td>
+                            <td>仅执行时消耗</td>
+                        </tr>
+                        <tr>
+                            <td>更新机制</td>
+                            <td>需重启</td>
+                            <td>热更新</td>
+                        </tr>
+                        <tr>
+                            <td>作用域</td>
+                            <td>全局</td>
+                            <td>可限定目录/项目</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="implementation">
+            <h2>⚙️ 实现细节</h2>
+            <div class="code-block">
+                <h3>SkillTool - 知识加载工具</h3>
+                <pre><code>async function executeSkill(skillName: string) {
+  // 1. 查找 Skill
+  const skill = findSkill(skillName);
+  
+  // 2. 获取 Prompt 内容
+  const prompt = await skill.getPromptForCommand();
+  
+  // 3. 通过 tool_result 注入
+  return {
+    type: "tool_result",
+    content: prompt
+  };
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="claude-md">
+            <h2>📄 CLAUDE.md 机制</h2>
+            <div class="claude-md-info">
+                <p><strong>CLAUDE.md</strong> 是 Claude Code 的项目级知识文件：</p>
+                <ul>
+                    <li>📍 <strong>位置</strong>：项目根目录或子目录</li>
+                    <li>🔄 <strong>加载</strong>：进入目录时自动加载</li>
+                    <li>📝 <strong>内容</strong>：项目规范、构建命令、约定</li>
+                    <li>🎯 <strong>作用域</strong>：仅在该目录及子目录生效</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p><a href="../index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
+    </footer>
+</body>
+</html>

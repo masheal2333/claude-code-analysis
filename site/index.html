@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code Harness Engineering 分析</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>🚀 Claude Code Harness Engineering 分析</h1>
+        <p>深入分析 Claude Code 中的 12 个渐进式 Harness 机制</p>
+        <nav>
+            <a href="#overview">概述</a>
+            <a href="#mechanisms">机制详解</a>
+            <a href="#architecture">架构图</a>
+            <a href="#implementation">实现分析</a>
+            <a href="skills.html">Skills 详解</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="overview">
+            <h2>🎯 什么是 Harness Engineering？</h2>
+            <div class="concept">
+                <p><strong>Harness Engineering</strong> 是构建生产级 AI Agent 的核心工程实践。它不仅仅是让 AI 能执行任务，而是要确保 AI 在执行过程中：</p>
+                <ul>
+                    <li>🛡️ <strong>安全可控</strong> - 权限管理、沙箱隔离</li>
+                    <li>📊 <strong>可监控</strong> - 任务跟踪、性能监控</li>
+                    <li>🔄 <strong>可恢复</strong> - 错误处理、状态持久化</li>
+                    <li>📈 <strong>可扩展</strong> - 模块化设计、插件系统</li>
+                    <li>👥 <strong>可协作</strong> - 多代理、团队协作</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="mechanisms">
+            <h2>🔧 12 个渐进式 Harness 机制</h2>
+            <div class="mechanism-grid">
+                <!-- 机制卡片将由 JavaScript 动态生成 -->
+            </div>
+        </section>
+
+        <section id="architecture">
+            <h2>🏗️ 架构设计</h2>
+            <div class="mermaid">
+                graph TB
+                    subgraph "核心循环层"
+                        A[用户输入] --> B[API 调用]
+                        B --> C{停止原因?}
+                        C -->|stop| D[返回结果]
+                        C -->|tool_use| E[工具执行]
+                        E --> B
+                    end
+
+                    subgraph "工具系统层"
+                        F[工具注册] --> G[工具分发]
+                        G --> H[权限检查]
+                        H --> I[工具执行]
+                        I --> J[结果处理]
+                    end
+
+                    subgraph "规划系统层"
+                        K[计划模式] --> L[任务分解]
+                        L --> M[步骤执行]
+                        M --> N[进度跟踪]
+                    end
+
+                    subgraph "代理系统层"
+                        O[主代理] --> P[子代理]
+                        P --> Q[任务分配]
+                        Q --> R[结果聚合]
+                    end
+
+                    A --> F
+                    D --> K
+                    R --> A
+            </div>
+        </section>
+
+        <section id="implementation">
+            <h2>💻 实现分析</h2>
+            <div class="code-analysis">
+                <div class="code-block">
+                    <h3>1. 核心循环 (query.ts)</h3>
+                    <pre><code>async function query(messages: Message[]): Promise<Response> {
+    while (true) {
+        const response = await claude.api.messages.create({
+            model: "claude-3-opus-20240229",
+            messages: messages,
+            tools: toolDefinitions
+        });
+        
+        if (response.stop_reason === "stop") {
+            return response;
+        } else if (response.stop_reason === "tool_use") {
+            const toolResult = await executeTool(response.tool_use);
+            messages.push({ role: "tool", content: toolResult });
+        }
+    }
+}</code></pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>2. 工具注册 (Tool.ts)</h3>
+                    <pre><code>interface Tool {
+    name: string;
+    description: string;
+    parameters: JSONSchema;
+    execute: (params: any) => Promise<any>;
+}
+
+function buildTool(definition: ToolDefinition): Tool {
+    return {
+        name: definition.name,
+        description: definition.description,
+        parameters: definition.parameters,
+        execute: async (params) => {
+            // 权限检查
+            await checkPermissions(definition.name, params);
+            // 执行工具
+            return await definition.execute(params);
+        }
+    };
+}</code></pre>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>基于 Claude Code v2.1.88 源码分析 | 创建于 2026-03-31</p>
+        <p>项目地址：<a href="https://github.com/masheal2333/claude-code-analysis">GitHub</a></p>
+    </footer>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

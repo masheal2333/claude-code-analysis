@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机制 12: 防护栏杆 - Claude Code Harness Engineering</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/mechanism.css">
+</head>
+<body>
+    <header>
+        <h1>🛡️ 机制 12: 防护栏杆</h1>
+        <p>"最后一道防线"</p>
+        <nav>
+            <a href="../index.html">← 返回首页</a>
+            <a href="#overview">概述</a>
+            <a href="#security">安全机制</a>
+            <a href="#implementation">实现细节</a>
+            <a href="#examples">使用示例</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="overview">
+            <h2>🎯 概述</h2>
+            <div class="concept">
+                <p><strong>防护栏杆系统</strong> 是 Claude Code 的安全保障，确保代理行为在可控范围内。</p>
+                <p><strong>核心功能：</strong></p>
+                <ul>
+                    <li>🔐 <strong>权限检查</strong>：每个工具调用都经过权限检查</li>
+                    <li>📦 <strong>沙箱隔离</strong>：危险操作在沙箱中执行</li>
+                    <li>🚫 <strong>安全边界</strong>：定义代理的行为边界</li>
+                    <li>📊 <strong>审计日志</strong>：记录所有关键操作</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="security">
+            <h2>🔐 安全机制</h3>
+            <div class="security-list">
+                <div class="security-item">
+                    <h3>权限检查</h3>
+                    <p>每个工具调用都必须通过权限检查：</p>
+                    <ul>
+                        <li>✅ <strong>用户授权</strong>：用户明确授权的操作</li>
+                        <li>✅ <strong>策略允许</strong>：符合安全策略</li>
+                        <li>✅ <strong>风险评估</strong>：操作风险在可控范围</li>
+                    </ul>
+                </div>
+                
+                <div class="danger-item">
+                    <h3>危险操作</h3>
+                    <p>以下操作需要额外确认：</p>
+                    <ul>
+                        <li>⚠️ <strong>删除文件</strong>：需要用户确认</li>
+                        <li>⚠️ <strong>执行命令</strong>：需要用户确认</li>
+                        <li>⚠️ <strong>网络访问</strong>：需要用户授权</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="implementation">
+            <h2>⚙️ 实现细节</h2>
+            <div class="code-block">
+                <h3>permissions/ - 权限系统</h3>
+                <pre><code>interface PermissionCheck {
+  tool: string;
+  params: any;
+  context: ToolUseContext;
+}
+
+async function checkPermissions(check: PermissionCheck) {
+  // 1. 检查工具是否需要权限
+  if (!requiresPermission(check.tool)) {
+    return { allowed: true };
+  }
+  
+  // 2. 检查用户是否已授权
+  if (await hasUserAuthorization(check)) {
+    return { allowed: true };
+  }
+  
+  // 3. 检查安全策略
+  const policy = await getSecurityPolicy();
+  if (policy.allows(check)) {
+    return { allowed: true };
+  }
+  
+  // 4. 需要用户确认
+  return {
+    allowed: false,
+    reason: "需要用户确认",
+    confirmationRequired: true
+  };
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="examples">
+            <h2>📚 使用示例</h2>
+            <div class="code-block">
+                <h3>危险操作确认</h3>
+                <pre><code>// 当 Claude 尝试删除文件时
+const result = await checkPermissions({
+  tool: "file_delete",
+  params: { path: "/important/file.txt" },
+  context: currentContext
+});
+
+if (!result.allowed) {
+  // 弹出确认对话框
+  const confirmed = await showConfirmationDialog({
+    title: "确认删除",
+    message: "确定要删除 /important/file.txt 吗？",
+    details: "此操作不可撤销"
+  });
+  
+  if (!confirmed) {
+    throw new Error("用户取消了操作");
+  }
+}</code></pre>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p><a href="../index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
+    </footer>
+</body>
+</html>

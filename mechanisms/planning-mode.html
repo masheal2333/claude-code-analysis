@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机制 3: 规划模式 - Claude Code Harness Engineering</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/mechanism.css">
+</head>
+<body>
+    <header>
+        <h1>📋 机制 3: 规划模式</h1>
+        <p>"没有计划的代理会漂移"</p>
+        <nav>
+            <a href="../index.html">← 返回首页</a>
+            <a href="#overview">概述</a>
+            <a href="#workflow">工作流程</a>
+            <a href="#tools">相关工具</a>
+            <a href="#benefits">优势</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="overview">
+            <h2>🎯 概述</h2>
+            <div class="concept">
+                <p><strong>规划模式</strong> 强制 Claude 先思考再行动。它将复杂任务分解为明确的步骤，然后按计划执行。</p>
+                <p><strong>核心思想：</strong></p>
+                <ul>
+                    <li>🧠 <strong>先规划</strong>：进入规划模式，列出所有步骤</li>
+                    <li>✅ <strong>后执行</strong>：按步骤执行，每完成一步就标记</li>
+                    <li>📊 <strong>可追踪</strong>：进度可视化，完成率翻倍</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="workflow">
+            <h2>🔄 工作流程</h2>
+            <div class="flow-diagram">
+                <pre>
+用户请求
+    ↓
+[进入规划模式]
+    ↓
+[分析任务复杂度]
+    ↓
+[生成步骤列表]
+    ↓
+[用户确认计划]
+    ↓
+[执行步骤 1]
+    ↓
+[标记完成]
+    ↓
+[执行步骤 2]
+    ↓
+...
+    ↓
+[所有步骤完成]
+    ↓
+[退出规划模式]
+                </pre>
+            </div>
+        </section>
+
+        <section id="tools">
+            <h2>🛠️ 相关工具</h2>
+            <div class="tool-list">
+                <div class="tool-item">
+                    <h3>EnterPlanModeTool</h3>
+                    <p><strong>用途：</strong>进入规划模式</p>
+                    <p><strong>触发：</strong>当任务复杂度高时自动或手动触发</p>
+                </div>
+                
+                <div class="tool-item">
+                    <h3>ExitPlanModeTool</h3>
+                    <p><strong>用途：</strong>退出规划模式</p>
+                    <p><strong>触发：</strong>所有步骤完成后</p>
+                </div>
+                
+                <div class="tool-item">
+                    <h3>TodoWriteTool</h3>
+                    <p><strong>用途：</strong>创建和更新任务步骤</p>
+                    <p><strong>功能：</strong>添加、完成、重新排序步骤</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="benefits">
+            <h2>💡 优势</h2>
+            <div class="benefits-list">
+                <ul>
+                    <li>📈 <strong>完成率翻倍</strong>：有计划的任务完成率更高</li>
+                    <li>👁️ <strong>透明度</strong>：用户可以看到完整计划</li>
+                    <li>🔄 <strong>可恢复</strong>：中断后可以从断点继续</li>
+                    <li>🎯 <strong>聚焦</strong>：避免任务漂移</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p><a href="../index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
+    </footer>
+</body>
+</html>

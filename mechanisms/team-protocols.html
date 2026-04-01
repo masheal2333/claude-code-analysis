@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机制 10: 团队协议 - Claude Code Harness Engineering</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/mechanism.css">
+</head>
+<body>
+    <header>
+        <h1>📜 机制 10: 团队协议</h1>
+        <p>"共享通信规则"</p>
+        <nav>
+            <a href="../index.html">← 返回首页</a>
+            <a href="#overview">概述</a>
+            <a href="#protocol">通信协议</a>
+            <a href="#implementation">实现细节</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="overview">
+            <h2>🎯 概述</h2>
+            <div class="concept">
+                <p><strong>团队协议</strong> 定义了代理团队之间的通信规则和协作模式。</p>
+                <p><strong>核心特性：</strong></p>
+                <ul>
+                    <li>📋 <strong>标准化</strong>：统一的通信格式</li>
+                    <li>🔄 <strong>请求-响应</strong>：明确的交互模式</li>
+                    <li>🤝 <strong>协商机制</strong>：支持任务协商</li>
+                    <li>📊 <strong>状态同步</strong>：团队成员状态同步</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="protocol">
+            <h2>📋 通信协议</h2>
+            <div class="protocol-example">
+                <pre>
+请求格式:
+{
+  "type": "request",
+  "from": "agent_a",
+  "to": "agent_b",
+  "action": "execute_task",
+  "params": { ... },
+  "timestamp": "2026-04-01T10:00:00Z"
+}
+
+响应格式:
+{
+  "type": "response",
+  "from": "agent_b",
+  "to": "agent_a",
+  "requestId": "req_123",
+  "status": "completed",
+  "result": { ... },
+  "timestamp": "2026-04-01T10:01:00Z"
+}
+                </pre>
+            </div>
+        </section>
+
+        <section id="implementation">
+            <h2>⚙️ 实现细节</h2>
+            <div class="code-block">
+                <h3>SendMessageTool - 消息发送工具</h3>
+                <pre><code>interface SendMessageParams {
+  to: string;
+  action: string;
+  params: any;
+  timeout?: number;
+}
+
+async function sendMessage(params: SendMessageParams) {
+  // 1. 构建消息
+  const message = {
+    type: "request",
+    from: currentAgentId,
+    to: params.to,
+    action: params.action,
+    params: params.params,
+    timestamp: new Date()
+  };
+  
+  // 2. 发送到目标代理的邮箱
+  await sendToMailbox(params.to, message);
+  
+  // 3. 等待响应
+  const response = await waitForResponse(message.id, params.timeout);
+  
+  return response;
+}</code></pre>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p><a href="../index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
+    </footer>
+</body>
+</html>

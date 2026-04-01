@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机制 1: 核心循环 - Claude Code Harness Engineering</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/mechanism.css">
+</head>
+<body>
+    <header>
+        <h1>🔄 机制 1: 核心循环</h1>
+        <p>"一个循环 + Bash 就是全部"</p>
+        <nav>
+            <a href="../index.html">← 返回首页</a>
+            <a href="#overview">概述</a>
+            <a href="#code">代码分析</a>
+            <a href="#flow">执行流程</a>
+            <a href="#significance">意义</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="overview">
+            <h2>🎯 概述</h2>
+            <div class="concept">
+                <p>核心循环是 Claude Code 的心脏。它就是一个简单的 <code>while(true)</code> 循环，不断调用 Claude API，检查返回的 <code>stop_reason</code>，然后执行相应的操作。</p>
+                <p><strong>核心逻辑：</strong></p>
+                <ul>
+                    <li>📤 发送消息给 Claude API</li>
+                    <li>🔍 检查 <code>stop_reason</code></li>
+                    <li>✅ 如果是 <code>stop</code>，返回结果</li>
+                    <li>🔧 如果是 <code>tool_use</code>，执行工具并追加结果</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="code">
+            <h2>💻 代码分析</h3>
+            <div class="code-block">
+                <h3>src/query.ts - 核心循环实现</h3>
+                <pre><code>async function query(messages: Message[]): Promise<Response> {
+    while (true) {
+        // 1. 调用 Claude API
+        const response = await claude.api.messages.create({
+            model: "claude-3-opus-20240229",
+            messages: messages,
+            tools: toolDefinitions
+        });
+        
+        // 2. 检查停止原因
+        if (response.stop_reason === "stop") {
+            // 3. 返回最终结果
+            return response;
+        } else if (response.stop_reason === "tool_use") {
+            // 4. 执行工具
+            const toolResult = await executeTool(response.tool_use);
+            
+            // 5. 将工具结果追加到消息历史
+            messages.push({ 
+                role: "tool", 
+                content: toolResult 
+            });
+        }
+    }
+}</code></pre>
+            </div>
+
+            <div class="code-block">
+                <h3>关键设计点</h3>
+                <ul>
+                    <li><strong>极简设计</strong>：整个 Agent 系统的核心就是一个循环</li>
+                    <li><strong>状态管理</strong>：通过 messages 数组维护对话历史</li>
+                    <li><strong>工具执行</strong>：工具调用结果作为下一轮输入</li>
+                    <li><strong>无限循环</strong>：直到收到 stop 响应才退出</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="flow">
+            <h2>🔄 执行流程</h2>
+            <div class="flow-diagram">
+                <pre>
+用户输入
+    ↓
+[调用 Claude API]
+    ↓
+检查 stop_reason
+    ↓
+┌─────────────────┐
+│ stop_reason=stop │ → 返回最终结果
+└─────────────────┘
+    ↓
+┌─────────────────────┐
+│ stop_reason=tool_use │ → 执行工具
+└─────────────────────┘
+    ↓
+[工具执行完成]
+    ↓
+[将结果追加到 messages]
+    ↓
+[继续循环]
+                </pre>
+            </div>
+        </section>
+
+        <section id="significance">
+            <h2>💡 为什么这样设计？</h2>
+            <div class="insight">
+                <h3>设计哲学</h3>
+                <p>这种设计体现了 <strong>"简单即美"</strong> 的工程哲学：</p>
+                <ul>
+                    <li>🎯 <strong>聚焦核心</strong>：只关注最核心的循环逻辑</li>
+                    <li>🔄 <strong>可预测性</strong>：每次循环都是确定性的</li>
+                    <li>📈 <strong>可扩展性</strong>：工具可以随时添加，循环逻辑不变</li>
+                    <li>🐛 <strong>易调试</strong>：问题可以定位到具体某一轮循环</li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p><a href="../index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机制 9: 代理团队 - Claude Code Harness Engineering</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/mechanism.css">
+</head>
+<body>
+    <header>
+        <h1>👥 机制 9: 代理团队</h1>
+        <p>"太大了就委托给队友"</p>
+        <nav>
+            <a href="../index.html">← 返回首页</a>
+            <a href="#overview">概述</a>
+            <a href="#implementation">实现细节</a>
+            <a href="#communication">通信机制</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="overview">
+            <h2>🎯 概述</h2>
+            <div class="concept">
+                <p><strong>代理团队系统</strong> 允许创建持久的代理团队，它们可以协作完成复杂任务。</p>
+                <p><strong>核心特性：</strong></p>
+                <ul>
+                    <li>👥 <strong>持久团队</strong>：团队成员长期存在</li>
+                    <li>📬 <strong>异步通信</strong>：通过邮箱系统通信</li>
+                    <li>🎯 <strong>任务分配</strong>：智能分配任务给合适的成员</li>
+                    <li>🔄 <strong>协作完成</strong>：团队成员协作完成任务</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="implementation">
+            <h2>⚙️ 实现细节</h2>
+            <div class="code-block">
+                <h3>TeamCreate - 创建团队</h3>
+                <pre><code>interface TeamCreateParams {
+  name: string;
+  members: TeamMember[];
+  communicationProtocol?: 'async' | 'sync';
+}
+
+async function createTeam(params: TeamCreateParams) {
+  // 1. 创建团队
+  const team = {
+    id: generateTeamId(),
+    name: params.name,
+    members: params.members,
+    createdAt: new Date()
+  };
+  
+  // 2. 为每个成员创建邮箱
+  for (const member of params.members) {
+    await createMailbox(member.id);
+  }
+  
+  // 3. 建立通信通道
+  await setupCommunicationChannels(team);
+  
+  return team;
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="communication">
+            <h2>📬 通信机制</h2>
+            <div class="communication-diagram">
+                <pre>
+代理 A
+    ↓
+[发送消息]
+    ↓
+[邮箱系统]
+    ↓
+代理 B
+    ↓
+[处理消息]
+    ↓
+[返回结果]
+                </pre>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p><a href="../index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>机制 11: 自动代理 - Claude Code Harness Engineering</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/mechanism.css">
+</head>
+<body>
+    <header>
+        <h1>🤖 机制 11: 自动代理</h1>
+        <p>"队友扫描并认领任务"</p>
+        <nav>
+            <a href="../index.html">← 返回首页</a>
+            <a href="#overview">概述</a>
+            <a href="#implementation">实现细节</a>
+            <a href="#workflow">工作流程</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="overview">
+            <h2>🎯 概述</h2>
+            <div class="concept">
+                <p><strong>自动代理系统</strong> 允许代理在空闲时自动扫描并认领任务，实现自主工作。</p>
+                <p><strong>核心特性：</strong></p>
+                <ul>
+                    <li>🔍 <strong>任务扫描</strong>：代理空闲时自动扫描待办任务</li>
+                    <li>🎯 <strong>智能认领</strong>：根据能力和优先级认领任务</li>
+                    <li>⚡ <strong>自主工作</strong>：无需人工干预，自动执行</li>
+                    <li>📊 <strong>进度汇报</strong>：定期汇报工作进度</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="implementation">
+            <h2>⚙️ 实现细节</h2>
+            <div class="code-block">
+                <h3>coordinator/coordinatorMode.ts</h3>
+                <pre><code>interface CoordinatorConfig {
+  scanInterval: number;  // 扫描间隔（毫秒）
+  maxConcurrent: number; // 最大并发任务数
+  priorityWeights: { [key: string]: number };
+}
+
+async function startCoordinator(config: CoordinatorConfig) {
+  // 1. 启动扫描循环
+  setInterval(async () => {
+    // 2. 检查代理是否空闲
+    if (isAgentIdle()) {
+      // 3. 扫描待办任务
+      const tasks = await scanAvailableTasks();
+      
+      // 4. 根据优先级排序
+      const sortedTasks = sortByPriority(tasks, config.priorityWeights);
+      
+      // 5. 认领任务
+      for (const task of sortedTasks.slice(0, config.maxConcurrent)) {
+        await claimTask(task);
+      }
+    }
+  }, config.scanInterval);
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="workflow">
+            <h2>🔄 工作流程</h2>
+            <div class="flow-diagram">
+                <pre>
+代理空闲
+    ↓
+[扫描待办任务]
+    ↓
+[根据优先级排序]
+    ↓
+[认领任务]
+    ↓
+[执行任务]
+    ↓
+[汇报进度]
+    ↓
+[任务完成]
+    ↓
+[继续扫描]
+                </pre>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p><a href="../index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
+    </footer>
+</body>
+</html>
