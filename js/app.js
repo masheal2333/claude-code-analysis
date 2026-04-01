@@ -1,12 +1,14 @@
 // Claude Code Harness Engineering 分析应用
 document.addEventListener('DOMContentLoaded', function() {
     // 初始化 Mermaid
-    mermaid.initialize({ 
-        startOnLoad: true,
-        theme: 'default',
-        securityLevel: 'loose',
-        flowchart: { useMaxWidth: true, htmlLabels: true }
-    });
+    if (typeof mermaid !== 'undefined') {
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { useMaxWidth: true, htmlLabels: true }
+        });
+    }
 
     // 12 个 Harness 机制数据
     const mechanisms = [
@@ -130,14 +132,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 代码切换功能
+    // 初始化代码增强功能
+    enhanceCodeBlocks();
     initCodeTabs();
 
     // 平滑滚动 - 只处理 # 开头的链接
     document.querySelectorAll('nav a').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
             const href = this.getAttribute('href');
-            // 只处理 # 开头的锚点链接，不影响页面跳转
             if (href.startsWith('#')) {
                 e.preventDefault();
                 const target = document.querySelector(href);
@@ -145,29 +147,119 @@ document.addEventListener('DOMContentLoaded', function() {
                     target.scrollIntoView({ behavior: 'smooth' });
                 }
             }
-            // 其他链接（如 skills.html）正常跳转
         });
     });
 
     console.log('🔍 Claude Code Harness Engineering 分析已加载');
 });
 
+// 代码增强功能
+function enhanceCodeBlocks() {
+    // 为所有代码块添加行号和语法高亮
+    document.querySelectorAll('.code-panel code, .code-block code').forEach(codeBlock => {
+        const code = codeBlock.textContent;
+        const lines = code.split('\n');
+        
+        // 移除最后的空行
+        if (lines[lines.length - 1].trim() === '') {
+            lines.pop();
+        }
+        
+        // 创建带行号的代码
+        let html = '';
+        lines.forEach((line, index) => {
+            const lineNumber = index + 1;
+            const highlightedLine = highlightSyntax(line);
+            html += `<div class="code-line" data-line="${lineNumber}"><span class="line-content">${highlightedLine}</span></div>`;
+        });
+        
+        codeBlock.innerHTML = html;
+    });
+    
+    // 添加复制按钮
+    document.querySelectorAll('.code-panel').forEach(panel => {
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'code-copy-btn';
+        copyBtn.textContent = '📋 复制';
+        copyBtn.addEventListener('click', () => copyCode(panel));
+        panel.appendChild(copyBtn);
+        
+        const fullscreenBtn = document.createElement('button');
+        fullscreenBtn.className = 'code-fullscreen-btn';
+        fullscreenBtn.textContent = '⛶ 全屏';
+        fullscreenBtn.addEventListener('click', () => toggleFullscreen(panel));
+        panel.appendChild(fullscreenBtn);
+    });
+}
+
+// 简单的语法高亮
+function highlightSyntax(line) {
+    // 转义 HTML
+    line = line
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    
+    // TypeScript/JavaScript 关键字
+    const keywords = [
+        'async', 'await', 'break', 'case', 'catch', 'class', 'const', 'continue',
+        'debugger', 'default', 'delete', 'do', 'else', 'enum', 'export', 'extends',
+        'finally', 'for', 'from', 'function', 'if', 'import', 'in', 'instanceof',
+        'interface', 'let', 'new', 'of', 'return', 'super', 'switch', 'this',
+        'throw', 'try', 'typeof', 'var', 'void', 'while', 'with', 'yield',
+        'true', 'false', 'null', 'undefined', 'Promise', 'Map', 'Set', 'Array',
+        'Object', 'String', 'Number', 'Boolean', 'Symbol', 'BigInt'
+    ];
+    
+    // Python 关键字
+    const pythonKeywords = [
+        'False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await',
+        'break', 'class', 'continue', 'def', 'del', 'elif', 'else', 'except',
+        'finally', 'for', 'from', 'global', 'if', 'import', 'in', 'is',
+        'lambda', 'nonlocal', 'not', 'or', 'pass', 'raise', 'return',
+        'try', 'while', 'with', 'yield'
+    ];
+    
+    // 合并关键字
+    const allKeywords = [...new Set([...keywords, ...pythonKeywords])];
+    
+    // 高亮关键字
+    allKeywords.forEach(keyword => {
+        const regex = new RegExp(`\\b(${keyword})\\b`, 'g');
+        line = line.replace(regex, '<span class="keyword">$1</span>');
+    });
+    
+    // 高亮字符串
+    line = line.replace(/(["'`])(?:(?!\1)[^\\]|\\.)*\1/g, '<span class="string">$&</span>');
+    
+    // 高亮注释
+    if (line.trimStart().startsWith('//') || line.trimStart().startsWith('#')) {
+        line = '<span class="comment">' + line + '</span>';
+    }
+    
+    // 高亮数字
+    line = line.replace(/\b(\d+\.?\d*)\b/g, '<span class="number">$1</span>');
+    
+    // 高亮函数调用
+    line = line.replace(/\b([a-zA-Z_]\w*)\s*\(/g, '<span class="function">$1</span>(');
+    
+    return line;
+}
+
 // 代码切换功能
 function initCodeTabs() {
     document.querySelectorAll('.code-tabs').forEach(tabContainer => {
         const tabs = tabContainer.querySelectorAll('.code-tab');
         
-        // 找到相邻的 .code-content（兼容不同父容器结构）
+        // 找到相邻的 .code-content
         let panels = [];
         let contentEl = tabContainer.nextElementSibling;
-        // 跳过空白文本节点
         while (contentEl && contentEl.nodeType === 3) {
             contentEl = contentEl.nextElementSibling;
         }
         if (contentEl && contentEl.classList.contains('code-content')) {
             panels = contentEl.querySelectorAll('.code-panel');
         }
-        // 后备：在父容器中搜索
         if (panels.length === 0) {
             const parent = tabContainer.parentElement;
             if (parent) {
@@ -192,7 +284,71 @@ function initCodeTabs() {
                         panel.classList.remove('active');
                     }
                 });
+                
+                // 重新增强当前面板的代码
+                enhanceCodeBlocks();
             });
         });
     });
+}
+
+// 复制代码功能
+function copyCode(panel) {
+    const code = panel.querySelector('code');
+    if (!code) return;
+    
+    // 获取纯文本
+    const text = code.textContent;
+    
+    navigator.clipboard.writeText(text).then(() => {
+        const btn = panel.querySelector('.code-copy-btn');
+        if (btn) {
+            const originalText = btn.textContent;
+            btn.textContent = '✅ 已复制';
+            setTimeout(() => {
+                btn.textContent = originalText;
+            }, 2000);
+        }
+    }).catch(err => {
+        console.error('复制失败:', err);
+    });
+}
+
+// 全屏切换功能
+function toggleFullscreen(panel) {
+    panel.classList.toggle('code-fullscreen');
+    
+    if (panel.classList.contains('code-fullscreen')) {
+        // 进入全屏
+        document.body.style.overflow = 'hidden';
+        
+        // 添加退出全屏的按钮
+        const exitBtn = document.createElement('button');
+        exitBtn.className = 'code-fullscreen-exit';
+        exitBtn.textContent = '✕ 退出全屏';
+        exitBtn.style.cssText = `
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: #007acc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            cursor: pointer;
+            z-index: 1001;
+        `;
+        exitBtn.addEventListener('click', () => {
+            panel.classList.remove('code-fullscreen');
+            exitBtn.remove();
+            document.body.style.overflow = '';
+        });
+        document.body.appendChild(exitBtn);
+    } else {
+        // 退出全屏
+        document.body.style.overflow = '';
+        const exitBtn = document.querySelector('.code-fullscreen-exit');
+        if (exitBtn) exitBtn.remove();
+    }
 }
