@@ -133,7 +133,8 @@ h2 {
     font-size: 0.95rem;
 }
 
-/* 代码分析 */
+/* ===== 代码块容器 — VS Code 风格 ===== */
+
 .code-analysis {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -141,30 +142,246 @@ h2 {
 }
 
 .code-block {
-    background: #2c3e50;
-    padding: 1.5rem;
+    background: #1e1e1e;
     border-radius: 8px;
-    overflow-x: auto;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.05);
+    margin: 1.5rem 0;
 }
 
-.code-block h3 {
-    color: #ecf0f1;
-    margin-bottom: 1rem;
-    font-size: 1.2rem;
-}
-
-.code-block pre {
+.code-block > h3 {
+    background: #2d2d2d;
     margin: 0;
+    padding: 0.7rem 1rem;
+    font-size: 0.85rem;
+    color: #cccccc;
+    font-weight: 500;
+    border-bottom: 1px solid #404040;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }
 
+.code-block > h3::before {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #ff5f57;
+    box-shadow: 20px 0 0 #febc2e, 40px 0 0 #28c840;
+}
+
+.code-block > pre { margin: 0; background: #1e1e1e; }
+
+/* ===== 代码切换标签 ===== */
+.code-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 0;
+    background: #252526;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
+    border: 1px solid #3c3c3c;
+    border-bottom: none;
+}
+
+.code-tab {
+    padding: 0.55rem 1.1rem;
+    background: transparent;
+    border: none;
+    border-right: 1px solid #3c3c3c;
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #858585;
+    transition: all 0.15s ease;
+    position: relative;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.code-tab:hover { background: #2d2d2d; color: #cccccc; }
+.code-tab.active { background: #1e1e1e; color: #ffffff; }
+.code-tab.active::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: #007acc;
+}
+
+/* ===== 代码内容区域 ===== */
+.code-content {
+    position: relative;
+    background: #1e1e1e;
+    border-radius: 0 0 8px 8px;
+    border: 1px solid #3c3c3c;
+    border-top: none;
+    overflow: hidden;
+}
+
+.code-panel { display: none; margin: 0; padding: 0; }
+.code-panel.active { display: block; }
+
+/* ===== 增强代码块 — 行号 + 语法高亮 ===== */
+
+.code-header {
+    background: #252526;
+    padding: 0.45rem 0.8rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #3c3c3c;
+    min-height: 32px;
+}
+
+.code-lang {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #858585;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.code-actions { display: flex; gap: 0.3rem; }
+
+.code-action-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+    font-size: 0.72rem;
+    color: #858585;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.code-action-btn:hover { background: #3c3c3c; color: #cccccc; border-color: #555; }
+.code-action-btn.copied { color: #4ec9b0; border-color: #4ec9b0; }
+
+.code-lines {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 600px;
+    scrollbar-width: thin;
+    scrollbar-color: #424242 #1e1e1e;
+}
+
+.code-lines::-webkit-scrollbar { width: 8px; height: 8px; }
+.code-lines::-webkit-scrollbar-track { background: #1e1e1e; }
+.code-lines::-webkit-scrollbar-thumb { background: #424242; border-radius: 4px; }
+.code-lines::-webkit-scrollbar-thumb:hover { background: #555; }
+
+.code-line {
+    display: flex;
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Cascadia Code', Consolas, 'Courier New', monospace;
+    font-size: 13.5px;
+    line-height: 1.65;
+    min-height: 1.65em;
+    color: #d4d4d4;
+    -webkit-font-smoothing: antialiased;
+}
+
+.code-line:hover { background: rgba(255,255,255,0.03); }
+
+.line-number {
+    color: #6e7681;
+    background: #1e1e1e;
+    padding: 0 0.9rem 0 1rem;
+    text-align: right;
+    user-select: none;
+    min-width: 2.8rem;
+    border-right: 1px solid #3c3c3c;
+    flex-shrink: 0;
+    font-variant-numeric: tabular-nums;
+}
+
+.line-content {
+    padding: 0 1rem 0 0.8rem;
+    flex: 1;
+    white-space: pre;
+    tab-size: 4;
+}
+
+/* ===== 语法高亮 — VS Code Dark+ ===== */
+.hl-keyword     { color: #569cd6; }
+.hl-function    { color: #dcdcaa; }
+.hl-string      { color: #ce9178; }
+.hl-comment     { color: #6a9955; font-style: italic; }
+.hl-number      { color: #b5cea8; }
+.hl-operator    { color: #d4d4d4; }
+.hl-class       { color: #4ec9b0; }
+.hl-type        { color: #4ec9b0; }
+.hl-decorator   { color: #dcdcaa; }
+.hl-builtin     { color: #4fc1ff; }
+.hl-variable    { color: #9cdcfe; }
+.hl-property    { color: #9cdcfe; }
+.hl-constant    { color: #4fc1ff; }
+.hl-punctuation { color: #d4d4d4; }
+
+/* 全屏模式 */
+.code-block.fullscreen,
+.code-block-enhanced.fullscreen {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 10000;
+    border-radius: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+.code-block.fullscreen .code-lines,
+.code-block-enhanced.fullscreen .code-lines {
+    max-height: none;
+    height: calc(100vh - 32px);
+}
+
+.fullscreen-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+}
+
+/* ===== 旧版兼容 ===== */
 .code-block code {
-    color: #ecf0f1;
-    font-family: 'Consolas', 'Monaco', monospace;
-    font-size: 0.9rem;
-    line-height: 1.4;
+    color: #d4d4d4;
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+    font-size: 13.5px;
+    line-height: 1.65;
+    background: #1e1e1e;
+    display: block;
+    padding: 1rem;
+    overflow-x: auto;
+    white-space: pre;
 }
 
-/* 架构图 */
+pre {
+    background: #1e1e1e;
+    border-radius: 6px;
+    overflow: hidden;
+    margin: 1rem 0;
+}
+
+pre code {
+    display: block;
+    padding: 1rem 1.2rem;
+    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: #d4d4d4;
+    background: #1e1e1e;
+    overflow-x: auto;
+    white-space: pre;
+    -webkit-font-smoothing: antialiased;
+}
+
 .mermaid {
     background: white;
     padding: 1.5rem;
@@ -172,521 +389,42 @@ h2 {
     margin-top: 1rem;
 }
 
-/* 页脚 */
 footer {
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255,255,255,0.95);
     padding: 1.5rem;
     text-align: center;
     margin-top: 3rem;
-    box-shadow: 0 -4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -4px 6px rgba(0,0,0,0.1);
 }
 
-footer a {
-    color: #3498db;
-    text-decoration: none;
-}
-
-footer a:hover {
-    text-decoration: underline;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-    header h1 {
-        font-size: 2rem;
-    }
-    
-    nav {
-        flex-direction: column;
-        gap: 1rem;
-    }
-    
-    .mechanism-grid {
-        grid-template-columns: 1fr;
-    }
-    
-    .code-analysis {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* ===== 代码切换标签 ===== */
-.code-tabs {
-    display: flex;
-    gap: 0;
-    margin-bottom: 0;
-    border-bottom: 2px solid #30363d;
-    background: #161b22;
-    border-radius: 8px 8px 0 0;
-    overflow: hidden;
-}
-
-.code-tab {
-    padding: 0.6rem 1.2rem;
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #8b949e;
-    transition: all 0.2s ease;
-    margin-bottom: -2px;
-    letter-spacing: 0.02em;
-    position: relative;
-}
-
-.code-tab:hover {
-    background: rgba(88, 166, 255, 0.08);
-    color: #c9d1d9;
-}
-
-.code-tab.active {
-    background: #0d1117;
-    color: #58a6ff;
-    border-bottom-color: #58a6ff;
-}
-
-.code-tab.active::after {
-    content: '';
-    position: absolute;
-    bottom: -2px;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: #58a6ff;
-}
-
-/* ===== 代码内容区域 ===== */
-.code-content {
-    position: relative;
-    background: #0d1117;
-    border-radius: 0 0 8px 8px;
-    border: 1px solid #30363d;
-    border-top: none;
-    overflow: hidden;
-}
-
-.code-panel {
-    display: none;
-    margin: 0;
-    padding: 0;
-}
-
-.code-panel.active {
-    display: block;
-}
-
-.code-panel code {
-    display: block;
-    padding: 1.2rem 1.5rem;
-    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', Consolas, 'Courier New', monospace;
-    font-size: 14px;
-    line-height: 1.7;
-    color: #e6edf3;
-    background: #0d1117;
-    overflow-x: auto;
-    white-space: pre;
-    tab-size: 4;
-    -webkit-font-smoothing: antialiased;
-}
-
-/* 语法高亮 — 关键字 */
-.code-panel code .kw,
-.code-panel code [class*="keyword"] {
-    color: #ff7b72;
-}
-
-/* 语法高亮 — 字符串 */
-.code-panel code .str,
-.code-panel code [class*="string"] {
-    color: #a5d6ff;
-}
-
-/* 语法高亮 — 注释 */
-.code-panel code .cmt,
-.code-panel code [class*="comment"] {
-    color: #8b949e;
-    font-style: italic;
-}
-
-/* 语法高亮 — 类型 */
-.code-panel code .typ,
-.code-panel code [class*="type"] {
-    color: #79c0ff;
-}
-
-/* 语法高亮 — 数字 */
-.code-panel code .num,
-.code-panel code [class*="number"] {
-    color: #79c0ff;
-}
-
-/* 语法高亮 — 函数 */
-.code-panel code .fn,
-.code-panel code [class*="function"] {
-    color: #d2a8ff;
-}
-
-/* 代码块内联 code（非 code-panel） */
-.code-panel code .op,
-.code-panel code [class*="operator"] {
-    color: #ff7b72;
-}
-
-/* 旧版兼容 — 机制页面的 code-block 容器 */
-.code-block {
-    margin: 1.5rem 0;
-    border-radius: 8px;
-    overflow: hidden;
-}
-
-.code-block > h3 {
-    background: #161b22;
-    padding: 0.8rem 1.2rem;
-    margin: 0;
-    font-size: 0.95rem;
-    color: #c9d1d9;
-    border: 1px solid #30363d;
-    border-bottom: none;
-    border-radius: 8px 8px 0 0;
-}
-
-.code-block > pre {
-    background: #0d1117;
-    border: 1px solid #30363d;
-    padding: 1.2rem 1.5rem;
-    font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
-    font-size: 14px;
-    line-height: 1.7;
-    color: #e6edf3;
-    overflow-x: auto;
-    white-space: pre;
-    margin: 0;
-    border-radius: 0;
-}
-
-/* 普通 pre/code（无 code-tabs） */
-pre code {
-    font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
-    font-size: 14px;
-    line-height: 1.7;
-}
+footer a { color: #3498db; text-decoration: none; }
+footer a:hover { text-decoration: underline; }
 
 /* ===== 响应式 ===== */
 @media (max-width: 768px) {
-    .code-panel code {
-        font-size: 13px;
-        padding: 1rem;
-        line-height: 1.6;
-    }
-    
-    .code-tab {
-        padding: 0.5rem 0.8rem;
-        font-size: 0.8rem;
-    }
-    
-    .code-tabs {
-        border-radius: 6px 6px 0 0;
-    }
-    
-    .code-content {
-        border-radius: 0 0 6px 6px;
-    }
-    
-    .code-block > pre {
-        font-size: 13px;
-        padding: 1rem;
-    }
+    header h1 { font-size: 2rem; }
+    nav { flex-direction: column; gap: 1rem; }
+    .mechanism-grid { grid-template-columns: 1fr; }
+    .code-analysis { grid-template-columns: 1fr; }
+    .code-line { font-size: 12.5px; }
+    .line-number { padding: 0 0.5rem; min-width: 2rem; font-size: 11px; }
+    .line-content { padding: 0 0.6rem; }
+    .code-tab { padding: 0.45rem 0.7rem; font-size: 0.78rem; }
+    .code-header { padding: 0.35rem 0.6rem; }
+    .code-action-btn { padding: 0.2rem 0.4rem; font-size: 0.68rem; }
+    .code-block { border-radius: 6px; margin: 1rem 0; }
+    .code-tabs { border-radius: 6px 6px 0 0; }
+    .code-content { border-radius: 0 0 6px 6px; }
 }
 
 @media (max-width: 480px) {
-    .code-panel code {
-        font-size: 12px;
-        padding: 0.8rem;
-    }
-    
-    .code-tab {
-        padding: 0.4rem 0.6rem;
-        font-size: 0.75rem;
-    }
+    .code-line { font-size: 11.5px; }
+    .line-number { padding: 0 0.4rem; min-width: 1.6rem; font-size: 10px; }
+    .line-content { padding: 0 0.4rem; }
+    .code-tab { padding: 0.35rem 0.5rem; font-size: 0.72rem; }
+    .code-lines { max-height: 400px; }
 }
 
-/* ===== 美观的代码展示样式 ===== */
-
-/* 代码切换标签 - VS Code 风格 */
-.code-tabs {
-    display: flex;
-    gap: 0;
-    margin-bottom: 0;
-    background: #1e1e1e;
-    border-radius: 8px 8px 0 0;
-    overflow: hidden;
-    border: 1px solid #333;
-    border-bottom: none;
-}
-
-.code-tab {
-    padding: 0.7rem 1.5rem;
-    background: #2d2d2d;
-    border: none;
-    border-right: 1px solid #333;
-    cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: #858585;
-    transition: all 0.2s ease;
-    position: relative;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.code-tab:hover {
-    background: #3d3d3d;
-    color: #cccccc;
-}
-
-.code-tab.active {
-    background: #1e1e1e;
-    color: #4fc3f7;
-    border-bottom: 2px solid #4fc3f7;
-}
-
-.code-tab.active::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 2px;
-    background: #4fc3f7;
-}
-
-/* 代码内容区域 */
-.code-content {
-    background: #1e1e1e;
-    border-radius: 0 0 8px 8px;
-    border: 1px solid #333;
-    border-top: none;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.code-panel {
-    display: none;
-    margin: 0;
-    padding: 0;
-    position: relative;
-}
-
-.code-panel.active {
-    display: block;
-}
-
-/* 代码块头部 */
-.code-panel::before {
-    content: attr(data-lang);
-    position: absolute;
-    top: 0;
-    right: 0;
-    background: #007acc;
-    color: white;
-    padding: 0.3rem 0.8rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    border-radius: 0 0 0 6px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.code-panel code {
-    display: block;
-    padding: 1.5rem 1.5rem 1.5rem 4.5rem;
-    font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Cascadia Code', Consolas, monospace;
-    font-size: 14px;
-    line-height: 1.7;
-    color: #d4d4d4;
-    background: #1e1e1e;
-    overflow-x: auto;
-    white-space: pre;
-    tab-size: 4;
-    -webkit-font-smoothing: antialiased;
-    min-height: 100px;
-}
-
-/* 行号样式 */
-.code-line {
-    display: flex;
-    position: relative;
-}
-
-.code-line::before {
-    content: attr(data-line);
-    position: absolute;
-    left: -3rem;
-    width: 2.5rem;
-    text-align: right;
-    color: #858585;
-    font-size: 13px;
-    user-select: none;
-    padding-right: 0.5rem;
-    border-right: 1px solid #333;
-    margin-right: 1rem;
-}
-
-/* 语法高亮 */
-.keyword { color: #569cd6; font-weight: 500; }
-.function { color: #dcdcaa; }
-.string { color: #ce9178; }
-.comment { color: #6a9955; font-style: italic; }
-.number { color: #b5cea8; }
-.operator { color: #d4d4d4; }
-.class { color: #4ec9b0; }
-.type { color: #4ec9b0; }
-.decorator { color: #dcdcaa; }
-.parameter { color: #9cdcfe; }
-.bracket { color: #ffd700; }
-.punctuation { color: #d4d4d4; }
-
-/* 复制按钮 */
-.code-copy-btn {
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    background: #007acc;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 0.4rem 0.8rem;
-    font-size: 0.75rem;
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: 10;
-}
-
-.code-panel:hover .code-copy-btn {
-    opacity: 1;
-}
-
-.code-copy-btn:hover {
-    background: #005a9e;
-}
-
-/* 全屏按钮 */
-.code-fullscreen-btn {
-    position: absolute;
-    top: 0.5rem;
-    right: 3rem;
-    background: #007acc;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 0.4rem 0.8rem;
-    font-size: 0.75rem;
-    cursor: pointer;
-    opacity: 0;
-    transition: opacity 0.3s ease;
-    z-index: 10;
-}
-
-.code-panel:hover .code-fullscreen-btn {
-    opacity: 1;
-}
-
-.code-fullscreen-btn:hover {
-    background: #005a9e;
-}
-
-/* 普通代码块（无切换） */
-.code-block {
-    background: #1e1e1e;
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    border: 1px solid #333;
-    margin: 1.5rem 0;
-}
-
-.code-block h3 {
-    background: #252526;
-    color: #cccccc;
-    margin: 0;
-    padding: 1rem 1.5rem;
-    font-size: 1rem;
-    font-weight: 600;
-    border-bottom: 1px solid #333;
-}
-
-.code-block pre {
-    margin: 0;
-    padding: 1.5rem;
-    overflow-x: auto;
-}
-
-.code-block code {
-    font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
-    font-size: 14px;
-    line-height: 1.7;
-    color: #d4d4d4;
-}
-
-/* 普通 pre/code（无包装器） */
-pre code {
-    font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace;
-    font-size: 14px;
-    line-height: 1.7;
-    color: #d4d4d4;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-    .code-panel code {
-        font-size: 13px;
-        padding: 1rem 1rem 1rem 3.5rem;
-        line-height: 1.6;
-    }
-    
-    .code-tab {
-        padding: 0.5rem 1rem;
-        font-size: 0.85rem;
-    }
-    
-    .code-tabs {
-        border-radius: 6px 6px 0 0;
-    }
-    
-    .code-content {
-        border-radius: 0 0 6px 6px;
-    }
-    
-    .code-block > pre {
-        font-size: 13px;
-        padding: 1rem;
-    }
-    
-    .code-line::before {
-        left: -2.5rem;
-        width: 2rem;
-        font-size: 12px;
-    }
-}
-
-@media (max-width: 480px) {
-    .code-panel code {
-        font-size: 12px;
-        padding: 0.8rem 0.8rem 0.8rem 3rem;
-    }
-    
-    .code-tab {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.8rem;
-    }
-    
-    .code-line::before {
-        left: -2rem;
-        width: 1.5rem;
-    }
-}
 
 /* 全屏模式样式 */
 .code-fullscreen {
