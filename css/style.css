@@ -210,54 +210,204 @@ footer a:hover {
     }
 }
 
-/* 代码切换标签 */
+/* ===== 代码切换标签 ===== */
 .code-tabs {
     display: flex;
     gap: 0;
     margin-bottom: 0;
-    border-bottom: 2px solid #ddd;
+    border-bottom: 2px solid #30363d;
+    background: #161b22;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
 }
 
 .code-tab {
-    padding: 0.5rem 1rem;
-    background: #f8f9fa;
+    padding: 0.6rem 1.2rem;
+    background: transparent;
     border: none;
     border-bottom: 2px solid transparent;
     cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 500;
-    color: #666;
-    transition: all 0.2s;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #8b949e;
+    transition: all 0.2s ease;
     margin-bottom: -2px;
+    letter-spacing: 0.02em;
+    position: relative;
 }
 
 .code-tab:hover {
-    background: #e9ecef;
-    color: #333;
+    background: rgba(88, 166, 255, 0.08);
+    color: #c9d1d9;
 }
 
 .code-tab.active {
-    background: white;
-    color: #3498db;
-    border-bottom-color: #3498db;
+    background: #0d1117;
+    color: #58a6ff;
+    border-bottom-color: #58a6ff;
 }
 
-/* 代码内容区域 */
+.code-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #58a6ff;
+}
+
+/* ===== 代码内容区域 ===== */
 .code-content {
     position: relative;
+    background: #0d1117;
+    border-radius: 0 0 8px 8px;
+    border: 1px solid #30363d;
+    border-top: none;
+    overflow: hidden;
 }
 
 .code-panel {
     display: none;
-    margin-top: 0;
-    border-radius: 0 0 8px 8px;
+    margin: 0;
+    padding: 0;
 }
 
 .code-panel.active {
     display: block;
 }
 
-.code-panel pre {
+.code-panel code {
+    display: block;
+    padding: 1.2rem 1.5rem;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', Consolas, 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #e6edf3;
+    background: #0d1117;
+    overflow-x: auto;
+    white-space: pre;
+    tab-size: 4;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* 语法高亮 — 关键字 */
+.code-panel code .kw,
+.code-panel code [class*="keyword"] {
+    color: #ff7b72;
+}
+
+/* 语法高亮 — 字符串 */
+.code-panel code .str,
+.code-panel code [class*="string"] {
+    color: #a5d6ff;
+}
+
+/* 语法高亮 — 注释 */
+.code-panel code .cmt,
+.code-panel code [class*="comment"] {
+    color: #8b949e;
+    font-style: italic;
+}
+
+/* 语法高亮 — 类型 */
+.code-panel code .typ,
+.code-panel code [class*="type"] {
+    color: #79c0ff;
+}
+
+/* 语法高亮 — 数字 */
+.code-panel code .num,
+.code-panel code [class*="number"] {
+    color: #79c0ff;
+}
+
+/* 语法高亮 — 函数 */
+.code-panel code .fn,
+.code-panel code [class*="function"] {
+    color: #d2a8ff;
+}
+
+/* 代码块内联 code（非 code-panel） */
+.code-panel code .op,
+.code-panel code [class*="operator"] {
+    color: #ff7b72;
+}
+
+/* 旧版兼容 — 机制页面的 code-block 容器 */
+.code-block {
+    margin: 1.5rem 0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.code-block > h3 {
+    background: #161b22;
+    padding: 0.8rem 1.2rem;
     margin: 0;
-    border-radius: 0 0 8px 8px;
+    font-size: 0.95rem;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+}
+
+.code-block > pre {
+    background: #0d1117;
+    border: 1px solid #30363d;
+    padding: 1.2rem 1.5rem;
+    font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    color: #e6edf3;
+    overflow-x: auto;
+    white-space: pre;
+    margin: 0;
+    border-radius: 0;
+}
+
+/* 普通 pre/code（无 code-tabs） */
+pre code {
+    font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+/* ===== 响应式 ===== */
+@media (max-width: 768px) {
+    .code-panel code {
+        font-size: 13px;
+        padding: 1rem;
+        line-height: 1.6;
+    }
+    
+    .code-tab {
+        padding: 0.5rem 0.8rem;
+        font-size: 0.8rem;
+    }
+    
+    .code-tabs {
+        border-radius: 6px 6px 0 0;
+    }
+    
+    .code-content {
+        border-radius: 0 0 6px 6px;
+    }
+    
+    .code-block > pre {
+        font-size: 13px;
+        padding: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .code-panel code {
+        font-size: 12px;
+        padding: 0.8rem;
+    }
+    
+    .code-tab {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.75rem;
+    }
 }

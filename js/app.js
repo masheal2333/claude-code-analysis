@@ -156,8 +156,25 @@ document.addEventListener('DOMContentLoaded', function() {
 function initCodeTabs() {
     document.querySelectorAll('.code-tabs').forEach(tabContainer => {
         const tabs = tabContainer.querySelectorAll('.code-tab');
-        const codeBlock = tabContainer.closest('.code-block');
-        const panels = codeBlock.querySelectorAll('.code-panel');
+        
+        // 找到相邻的 .code-content（兼容不同父容器结构）
+        let panels = [];
+        let contentEl = tabContainer.nextElementSibling;
+        // 跳过空白文本节点
+        while (contentEl && contentEl.nodeType === 3) {
+            contentEl = contentEl.nextElementSibling;
+        }
+        if (contentEl && contentEl.classList.contains('code-content')) {
+            panels = contentEl.querySelectorAll('.code-panel');
+        }
+        // 后备：在父容器中搜索
+        if (panels.length === 0) {
+            const parent = tabContainer.parentElement;
+            if (parent) {
+                panels = parent.querySelectorAll('.code-panel');
+            }
+        }
+        if (panels.length === 0) return;
         
         tabs.forEach(tab => {
             tab.addEventListener('click', function() {
