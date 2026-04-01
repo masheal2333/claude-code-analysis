@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Skills 机制分析 - Claude Code Harness Engineering</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/skills.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1>🧠 Skills 机制深度解析</h1>
+        <p>探索 Claude Code 如何通过 Skills 实现 "按需加载知识" 的核心机制</p>
+        <nav>
+            <a href="index.html">返回首页</a>
+            <a href="#overview">概述</a>
+            <a href="#architecture">架构设计</a>
+            <a href="#implementation">实现细节</a>
+            <a href="#examples">代码示例</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="overview">
+            <h2>🎯 什么是 Skills？</h2>
+            <div class="concept">
+                <p><strong>Skills</strong> 是 Claude Code 的核心扩展机制，它允许：</p>
+                <ul>
+                    <li>📦 <strong>模块化知识</strong> - 将特定领域的知识封装为独立模块</li>
+                    <li>🔄 <strong>按需加载</strong> - 仅在需要时注入上下文，节省 Token</li>
+                    <li>🔌 <strong>动态扩展</strong> - 支持本地文件、MCP 服务、远程市场</li>
+                    <li>🛠️ <strong>工具化执行</strong> - 通过 Tool 系统统一管理执行</li>
+                </ul>
+            </div>
+            
+            <div class="vs-prompt">
+                <h3>Skills vs System Prompt 的区别</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>特性</th>
+                            <th>System Prompt</th>
+                            <th>Skills</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>加载时机</td>
+                            <td>始终加载</td>
+                            <td>按需触发</td>
+                        </tr>
+                        <tr>
+                            <td>Token 消耗</td>
+                            <td>每轮对话都消耗</td>
+                            <td>仅执行时消耗</td>
+                        </tr>
+                        <tr>
+                            <td>更新机制</td>
+                            <td>需重启</td>
+                            <td>热更新</td>
+                        </tr>
+                        <tr>
+                            <td>作用域</td>
+                            <td>全局</td>
+                            <td>可限定目录/项目</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="architecture">
+            <h2>🏗️ Skills 架构设计</h2>
+            <div class="mermaid">
+                graph TB
+                    subgraph "Skill 加载层"
+                        A[本地 .claude/skills/] --> D[Skill 注册表]
+                        B[全局 ~/.claude/skills/] --> D
+                        C[MCP 服务] --> D
+                    end
+
+                    subgraph "Skill 解析层"
+                        D --> E[Frontmatter 解析]
+                        E --> F[参数提取]
+                        E --> G[权限检查]
+                    end
+
+                    subgraph "Skill 执行层"
+                        H[SkillTool] --> I{执行模式}
+                        I -->|内联| J[直接注入 Prompt]
+                        I -->|Forked| K[子代理执行]
+                        J --> L[结果聚合]
+                        K --> L
+                    end
+
+                    subgraph "结果处理"
+                        L --> M[Tool Result]
+                        M --> N[上下文注入]
+                    end
+
+                    D --> H
+            </div>
+        </section>
+
+        <section id="implementation">
+            <h2>⚙️ 实现细节</h2>
+            
+            <div class="code-analysis">
+                <div class="code-block">
+                    <h3>1. Skill 定义 (Markdown + Frontmatter)</h3>
+                    <pre><code>---
+name: remember
+description: Review auto-memory entries
+whenToUse: Use when user wants to review memory
+userInvocable: true
+---
+
+# Memory Review
+
+## Goal
+Review the user's memory landscape...
+
+## Steps
+1. Gather all memory layers
+2. Classify entries
+3. Present report</code></pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>2. Skill 注册机制</h3>
+                    <pre><code>// src/skills/bundledSkills.ts
+interface SkillConfig {
+  name: string;
+  description: string;
+  whenToUse: string;
+  userInvocable: boolean;
+  getPromptForCommand: (args?: string) => Promise&lt;ContentBlock[]&gt;;
+}
+
+function registerBundledSkill(config: SkillConfig) {
+  // 注册到全局 Skill 注册表
+  skillRegistry.set(config.name, {
+    type: 'prompt',
+    ...config
+  });
+}</code></pre>
+                </div>
+
+                <div class="code-block">
+                    <h3>3. Skill 执行流程</h3>
+                    <pre><code>// src/tools/SkillTool/SkillTool.ts
+async function executeForkedSkill(
+  command: Command,
+  args: string | undefined,
+  context: ToolUseContext
+): Promise&lt;ToolResult&gt; {
+  // 1. 获取 Prompt 内容
+  const prompt = await command.getPromptForCommand(args);
+  
+  // 2. 创建隔离的子代理上下文
+  const agentId = createAgentId();
+  
+  // 3. 在子代理中执行
+  const result = await runAgent({
+    agentId,
+    messages: [createUserMessage(prompt)],
+    context
+  });
+  
+  return result;
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="examples">
+            <h2>📚 实际案例分析</h2>
+            
+            <div class="skill-example">
+                <h3>案例 1: 内置 Skill - remember</h3>
+                <p><strong>用途：</strong> 记忆管理，将自动记忆条目整理到 CLAUDE.md</p>
+                <div class="code-block">
+                    <pre><code>// src/skills/bundled/remember.ts
+registerBundledSkill({
+  name: 'remember',
+  description: 'Review auto-memory entries...',
+  whenToUse: 'Use when user wants to review memory',
+  userInvocable: true,
+  isEnabled: () => isAutoMemoryEnabled(),
+  async getPromptForCommand(args) {
+    let prompt = SKILL_PROMPT;
+    if (args) {
+      prompt += `\n## Additional context\n\n${args}`;
+    }
+    return [{ type: 'text', text: prompt }];
+  }
+});</code></pre>
+                </div>
+            </div>
+
+            <div class="skill-example">
+                <h3>案例 2: 目录触发器 (CLAUDE.md)</h3>
+                <p><strong>原理：</strong> 检测到目录中的 CLAUDE.md 时自动加载相关 Skill</p>
+                <div class="code-block">
+                    <pre><code>// src/skills/loadSkillsDir.ts
+async function loadMarkdownFilesForSubdir(
+  dir: string
+): Promise&lt;MarkdownFile[]&gt; {
+  // 1. 扫描 .claude/skills/ 目录
+  const files = await fs.readdir(dir);
+  
+  // 2. 解析 Frontmatter
+  for (const file of files) {
+    const content = await fs.readFile(file);
+    const { data, content: body } = parseFrontmatter(content);
+    
+    // 3. 注册为 Skill
+    registerSkill({
+      name: data.name,
+      description: data.description,
+      prompt: body
+    });
+  }
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="skill-discovery">
+            <h2>🔍 Skill 发现机制</h2>
+            
+            <div class="discovery-flow">
+                <div class="flow-step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h4>静态扫描</h4>
+                        <p>启动时扫描以下位置：</p>
+                        <ul>
+                            <li>~/.claude/skills/ (全局)</li>
+                            <li>.claude/skills/ (项目级)</li>
+                            <li>Bundled Skills (内置)</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h4>动态触发</h4>
+                        <p>运行时事件触发：</p>
+                        <ul>
+                            <li>目录切换时重新扫描 CLAUDE.md</li>
+                            <li>MCP 服务连接时加载远程 Skills</li>
+                            <li>用户手动安装市场 Skill</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="flow-step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <h4>智能推荐</h4>
+                        <p>根据上下文推荐：</p>
+                        <ul>
+                            <li>分析用户输入意图</li>
+                            <li>匹配 Skill description</li>
+                            <li>通过 skill_discovery 推荐</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p><a href="index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
+    </footer>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+</html>
