@@ -6,6 +6,7 @@
     <title>机制 6: 上下文压缩 - Claude Code Harness Engineering</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/mechanism.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
 <body>
     <header>
@@ -14,7 +15,10 @@
         <nav>
             <a href="../index.html">← 返回首页</a>
             <a href="#overview">概述</a>
-            <a href="#strategies">压缩策略</a>
+            <a href="#strategies">三大压缩策略</a>
+            <a href="#auto-compact">AutoCompact 详解</a>
+            <a href="#snip-compact">SnipCompact 详解</a>
+            <a href="#context-collapse">ContextCollapse 详解</a>
             <a href="#implementation">实现细节</a>
             <a href="#triggers">触发条件</a>
         </nav>
@@ -25,37 +29,394 @@
             <h2>🎯 概述</h2>
             <div class="concept">
                 <p><strong>上下文压缩</strong> 是 Claude Code 的内存管理机制。当对话历史太长时，它会自动压缩以释放空间。</p>
-                <p><strong>核心策略：</strong></p>
+                <p><strong>核心思想：</strong></p>
                 <ul>
-                    <li>📝 <strong>自动摘要</strong>：将长对话压缩为摘要</li>
-                    <li>✂️ <strong>智能修剪</strong>：删除不重要的历史</li>
-                    <li>🗜️ <strong>上下文折叠</strong>：折叠已完成的子任务</li>
+                    <li>💭 <strong>上下文窗口有限</strong>：Claude 的上下文窗口是有限的（如 200K tokens）</li>
+                    <li>📈 <strong>对话会增长</strong>：每轮对话都会增加历史记录</li>
+                    <li>🗜️ <strong>智能压缩</strong>：在不丢失关键信息的前提下压缩历史</li>
                 </ul>
+            </div>
+            
+            <div class="architecture-diagram">
+                <h3>压缩系统架构</h3>
+                <div class="mermaid">
+                    graph TB
+                        A[对话历史] --> B{Token 使用率}
+                        B -->|< 60%| C[正常模式]
+                        B -->|60-80%| D[警告模式]
+                        B -->|> 80%| E[压缩模式]
+                        
+                        E --> F[选择压缩策略]
+                        F --> G[AutoCompact]
+                        F --> H[SnipCompact]
+                        F --> I[ContextCollapse]
+                        
+                        G --> J[生成摘要]
+                        H --> K[修剪冗余]
+                        I --> L[折叠子任务]
+                        
+                        J --> M[压缩后历史]
+                        K --> M
+                        L --> M
+                        
+                        M --> N[继续对话]
+                </div>
             </div>
         </section>
 
         <section id="strategies">
-            <h2>📊 压缩策略</h2>
-            <div class="strategy-list">
-                <div class="strategy-item">
-                    <h3>1. AutoCompact (自动摘要)</h3>
-                    <p><strong>原理：</strong>使用 LLM 生成对话摘要</p>
-                    <p><strong>触发：</strong>Token 使用达到阈值</p>
-                    <p><strong>效果：</strong>保留关键信息，压缩详细内容</p>
+            <h2>📊 三大压缩策略对比</h2>
+            <div class="comparison-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>策略</th>
+                            <th>原理</th>
+                            <th>触发时机</th>
+                            <th>压缩率</th>
+                            <th>信息保留</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>AutoCompact</strong></td>
+                            <td>LLM 生成摘要</td>
+                            <td>Token > 80%</td>
+                            <td>~70%</td>
+                            <td>⭐⭐⭐⭐⭐</td>
+                        </tr>
+                        <tr>
+                            <td><strong>SnipCompact</strong></td>
+                            <td>删除冗余工具结果</td>
+                            <td>工具调用完成后</td>
+                            <td>~30%</td>
+                            <td>⭐⭐⭐⭐</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ContextCollapse</strong></td>
+                            <td>折叠子代理任务</td>
+                            <td>子任务完成</td>
+                            <td>~50%</td>
+                            <td>⭐⭐⭐⭐</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="auto-compact">
+            <h2>📝 AutoCompact (自动摘要) 详解</h2>
+            <div class="strategy-detail">
+                <div class="strategy-header">
+                    <h3>🎯 核心原理</h3>
+                    <p>使用 LLM 生成对话摘要，保留关键信息，压缩详细内容。</p>
                 </div>
                 
-                <div class="strategy-item">
-                    <h3>2. SnipCompact (智能修剪)</h3>
-                    <p><strong>原理：</strong>删除已完成的工具调用结果</p>
-                    <p><strong>触发：</strong>工具调用完成后</p>
-                    <p><strong>效果：</strong>减少冗余信息</p>
+                <div class="strategy-workflow">
+                    <h4>🔄 工作流程</h4>
+                    <div class="mermaid">
+                        graph LR
+                            A[对话历史] --> B[检测 Token 使用]
+                            B --> C{超过阈值?}
+                            C -->|否| D[继续对话]
+                            C -->|是| E[提取待压缩消息]
+                            E --> F[调用 LLM 生成摘要]
+                            F --> G[保留系统消息]
+                            G --> H[替换为摘要]
+                            H --> I[继续对话]
+                    </div>
                 </div>
                 
-                <div class="strategy-item">
-                    <h3>3. ContextCollapse (上下文折叠)</h3>
-                    <p><strong>原理：</strong>折叠已完成的子代理任务</p>
-                    <p><strong>触发：</strong>子代理任务完成</p>
-                    <p><strong>效果：</strong>保持主对话简洁</p>
+                <div class="strategy-code">
+                    <h4>💻 实现代码</h4>
+                    <pre><code>// services/compact/autoCompact.ts
+
+interface AutoCompactConfig {
+  threshold: number;        // Token 阈值（默认 0.8）
+  maxSummaryTokens: number; // 摘要最大 Token 数
+  preserveSystem: boolean;  // 是否保留系统消息
+}
+
+async function autoCompact(
+  messages: Message[],
+  config: AutoCompactConfig
+): Promise<Message[]> {
+  // 1. 计算当前 Token 使用量
+  const tokenCount = countTokens(messages);
+  const maxTokens = getModelContextLimit();
+  
+  // 2. 检查是否需要压缩
+  if (tokenCount / maxTokens < config.threshold) {
+    return messages; // 不需要压缩
+  }
+  
+  // 3. 提取待压缩的消息（排除系统消息）
+  const toCompress = messages.filter(m => m.role !== 'system');
+  const systemMessages = messages.filter(m => m.role === 'system');
+  
+  // 4. 调用 LLM 生成摘要
+  const summaryPrompt = `
+    请将以下对话压缩为简洁的摘要，保留：
+    1. 用户的核心需求
+    2. 已完成的关键任务
+    3. 重要的决策和结论
+    4. 待完成的任务
+    
+    对话内容：
+    ${toCompress.map(m => `${m.role}: ${m.content}`).join('\n')}
+  `;
+  
+  const summary = await callLLM({
+    model: 'claude-3-haiku', // 使用轻量模型生成摘要
+    maxTokens: config.maxSummaryTokens,
+    messages: [{ role: 'user', content: summaryPrompt }]
+  });
+  
+  // 5. 构建压缩后的历史
+  return [
+    ...systemMessages,
+    {
+      role: 'assistant',
+      content: `[对话摘要]\n${summary}\n\n[压缩时间: ${new Date().toISOString()}]`
+    }
+  ];
+}</code></pre>
+                </div>
+                
+                <div class="strategy-example">
+                    <h4>📚 压缩示例</h4>
+                    <div class="before-after">
+                        <div class="before">
+                            <h5>压缩前 (15 条消息)</h5>
+                            <pre><code>user: 帮我分析这个 Python 代码
+assistant: 好的，我来分析...
+[代码分析过程...]
+user: 这里有个 bug
+assistant: 我来修复...
+[修复过程...]
+user: 测试一下
+assistant: 运行测试...
+[测试输出...]
+user: 优化性能
+assistant: 我来优化...
+[优化过程...]</code></pre>
+                        </div>
+                        <div class="after">
+                            <h5>压缩后 (1 条消息)</h5>
+                            <pre><code>[对话摘要]
+用户请求分析 Python 代码，发现并修复了一个 bug，
+进行了测试验证，并优化了性能。当前代码已可正常运行，
+性能提升约 30%。</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="snip-compact">
+            <h2>✂️ SnipCompact (智能修剪) 详解</h2>
+            <div class="strategy-detail">
+                <div class="strategy-header">
+                    <h3>🎯 核心原理</h3>
+                    <p>删除已完成的工具调用结果，保留工具调用的摘要信息。</p>
+                </div>
+                
+                <div class="strategy-workflow">
+                    <h4>🔄 工作流程</h4>
+                    <div class="mermaid">
+                        graph LR
+                            A[工具调用完成] --> B[标记为可修剪]
+                            B --> C{Token 压力大?}
+                            C -->|否| D[保留完整结果]
+                            C -->|是| E[提取关键信息]
+                            E --> F[删除详细输出]
+                            F --> G[保留摘要]
+                    </div>
+                </div>
+                
+                <div class="strategy-code">
+                    <h4>💻 实现代码</h4>
+                    <pre><code>// services/compact/snipCompact.ts
+
+interface SnipableToolResult {
+  toolName: string;
+  originalSize: number;
+  summary: string;
+  canSnip: boolean;
+}
+
+async function snipCompact(
+  messages: Message[]
+): Promise<Message[]> {
+  const result: Message[] = [];
+  
+  for (const msg of messages) {
+    if (msg.role === 'tool') {
+      // 1. 检查工具结果是否可以修剪
+      const snipable = analyzeToolResult(msg);
+      
+      if (snipable.canSnip && snipable.originalSize > 1000) {
+        // 2. 生成摘要
+        const summary = generateToolSummary(msg);
+        
+        // 3. 替换为摘要
+        result.push({
+          role: 'tool',
+          content: `[原始输出已修剪，共 ${snipable.originalSize} 字符]\n${summary}`
+        });
+      } else {
+        result.push(msg);
+      }
+    } else {
+      result.push(msg);
+    }
+  }
+  
+  return result;
+}
+
+function analyzeToolResult(msg: ToolMessage): SnipableToolResult {
+  const content = msg.content;
+  
+  // 检查是否是文件读取、命令执行等可修剪的工具
+  const snippableTools = ['read_file', 'execute_command', 'search'];
+  const toolName = extractToolName(msg);
+  
+  return {
+    toolName,
+    originalSize: content.length,
+    summary: '',
+    canSnip: snippableTools.includes(toolName)
+  };
+}</code></pre>
+                </div>
+                
+                <div class="strategy-example">
+                    <h4>📚 修剪示例</h4>
+                    <div class="before-after">
+                        <div class="before">
+                            <h5>修剪前 (文件读取结果)</h5>
+                            <pre><code>tool: read_file
+content: 
+// 文件内容... (2000 行代码)
+[完整的文件内容]</code></pre>
+                        </div>
+                        <div class="after">
+                            <h5>修剪后 (摘要)</h5>
+                            <pre><code>tool: read_file
+content:
+[原始输出已修剪，共 45000 字符]
+文件: src/main.ts
+大小: 45KB, 1200 行
+主要函数: main(), processInput(), handleOutput()
+类: App, Config, Logger</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="context-collapse">
+            <h2>🗜️ ContextCollapse (上下文折叠) 详解</h2>
+            <div class="strategy-detail">
+                <div class="strategy-header">
+                    <h3>🎯 核心原理</h3>
+                    <p>折叠已完成的子代理任务，将详细的执行过程压缩为简洁的结果。</p>
+                </div>
+                
+                <div class="strategy-workflow">
+                    <h4>🔄 工作流程</h4>
+                    <div class="mermaid">
+                        graph LR
+                            A[子代理任务完成] --> B[收集执行历史]
+                            B --> C[提取关键结果]
+                            C --> D[生成折叠摘要]
+                            D --> E[替换详细历史]
+                            E --> F[保留摘要]
+                    </div>
+                </div>
+                
+                <div class="strategy-code">
+                    <h4>💻 实现代码</h4>
+                    <pre><code>// services/compact/contextCollapse.ts
+
+interface SubAgentTask {
+  taskId: string;
+  task: string;
+  messages: Message[];
+  result: any;
+  status: 'completed' | 'failed';
+}
+
+async function contextCollapse(
+  mainMessages: Message[],
+  subAgentTasks: SubAgentTask[]
+): Promise<Message[]> {
+  const result: Message[] = [];
+  
+  for (const msg of mainMessages) {
+    // 1. 检查是否是子代理任务的消息
+    const isSubAgentMsg = subAgentTasks.some(task => 
+      task.messages.some(m => m.id === msg.id)
+    );
+    
+    if (isSubAgentMsg) {
+      // 2. 找到对应的子代理任务
+      const task = subAgentTasks.find(t => 
+        t.messages.some(m => m.id === msg.id)
+      );
+      
+      // 3. 只保留第一条和最后一条消息（任务描述和结果）
+      const isFirstMsg = task.messages[0].id === msg.id;
+      const isLastMsg = task.messages[task.messages.length - 1].id === msg.id;
+      
+      if (isFirstMsg) {
+        result.push(msg); // 保留任务描述
+      } else if (isLastMsg) {
+        // 替换为折叠摘要
+        result.push({
+          role: 'assistant',
+          content: `[子代理任务完成]\n任务: ${task.task}\n状态: ${task.status}\n结果: ${JSON.stringify(task.result).substring(0, 200)}...`
+        });
+      }
+      // 中间的详细消息被丢弃
+    } else {
+      result.push(msg);
+    }
+  }
+  
+  return result;
+}</code></pre>
+                </div>
+                
+                <div class="strategy-example">
+                    <h4>📚 折叠示例</h4>
+                    <div class="before-after">
+                        <div class="before">
+                            <h5>折叠前 (子代理执行过程)</h5>
+                            <pre><code>user: 帮我分析这 10 个文件
+assistant: 我将创建子代理来并行分析
+[子代理 1]: 分析 file1.ts...
+[子代理 1]: 读取文件...
+[子代理 1]: 解析代码...
+[子代理 1]: 发现 3 个函数
+[子代理 2]: 分析 file2.ts...
+... (50 条消息)</code></pre>
+                        </div>
+                        <div class="after">
+                            <h5>折叠后 (结果摘要)</h5>
+                            <pre><code>user: 帮我分析这 10 个文件
+assistant: 我将创建子代理来并行分析
+[子代理任务完成]
+任务: 分析 file1.ts
+状态: completed
+结果: 发现 3 个函数，2 个类
+[子代理任务完成]
+任务: 分析 file2.ts
+状态: completed
+结果: 发现 5 个函数，1 个类</code></pre>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -63,40 +424,126 @@
         <section id="implementation">
             <h2>⚙️ 实现细节</h2>
             <div class="code-block">
-                <h3>services/compact/ - 压缩服务</h3>
-                <pre><code>interface CompressionStrategy {
+                <h3>services/compact/ - 压缩服务架构</h3>
+                <pre><code>// services/compact/index.ts
+
+// 1. 压缩策略接口
+interface CompressionStrategy {
   name: string;
-  shouldCompress: (context: Context) => boolean;
+  priority: number;  // 优先级，数字越小优先级越高
+  shouldCompress: (context: CompressionContext) => boolean;
   compress: (messages: Message[]) => Promise<Message[]>;
 }
 
-// 注册压缩策略
-registerCompressionStrategy({
-  name: "autoCompact",
-  shouldCompress: (context) => {
-    return context.tokenCount > THRESHOLD;
-  },
-  compress: async (messages) => {
-    // 使用 LLM 生成摘要
-    const summary = await generateSummary(messages);
-    return [{
-      role: "system",
-      content: `对话摘要: ${summary}`
-    }];
+// 2. 压缩上下文
+interface CompressionContext {
+  tokenCount: number;
+  maxTokens: number;
+  messageCount: number;
+  hasSubAgentTasks: boolean;
+  hasToolResults: boolean;
+}
+
+// 3. 压缩管理器
+class CompressionManager {
+  private strategies: CompressionStrategy[] = [];
+  
+  registerStrategy(strategy: CompressionStrategy) {
+    this.strategies.push(strategy);
+    this.strategies.sort((a, b) => a.priority - b.priority);
   }
+  
+  async compress(messages: Message[]): Promise<Message[]> {
+    const context = this.buildContext(messages);
+    
+    // 按优先级尝试压缩策略
+    for (const strategy of this.strategies) {
+      if (strategy.shouldCompress(context)) {
+        console.log(`使用压缩策略: ${strategy.name}`);
+        return await strategy.compress(messages);
+      }
+    }
+    
+    return messages; // 没有策略触发
+  }
+  
+  private buildContext(messages: Message[]): CompressionContext {
+    return {
+      tokenCount: countTokens(messages),
+      maxTokens: getModelContextLimit(),
+      messageCount: messages.length,
+      hasSubAgentTasks: messages.some(m => m.role === 'tool' && m.content.includes('subagent')),
+      hasToolResults: messages.some(m => m.role === 'tool')
+    };
+  }
+}
+
+// 4. 注册压缩策略
+const compressionManager = new CompressionManager();
+
+compressionManager.registerStrategy({
+  name: 'autoCompact',
+  priority: 1,  // 最高优先级
+  shouldCompress: (ctx) => ctx.tokenCount / ctx.maxTokens > 0.8,
+  compress: autoCompact
+});
+
+compressionManager.registerStrategy({
+  name: 'contextCollapse',
+  priority: 2,
+  shouldCompress: (ctx) => ctx.hasSubAgentTasks,
+  compress: contextCollapse
+});
+
+compressionManager.registerStrategy({
+  name: 'snipCompact',
+  priority: 3,
+  shouldCompress: (ctx) => ctx.hasToolResults,
+  compress: snipCompact
 });</code></pre>
             </div>
         </section>
 
         <section id="triggers">
-            <h2>⚡ 触发条件</h2>
-            <div class="trigger-list">
-                <ul>
-                    <li>📊 <strong>Token 阈值</strong>：当 Token 使用达到 80% 时触发</li>
-                    <li>✅ <strong>任务完成</strong>：子任务完成后折叠上下文</li>
-                    <li>🔄 <strong>定期压缩</strong>：每 N 轮对话后自动压缩</li>
-                    <li>💾 <strong>内存不足</strong>：系统内存不足时触发</li>
-                </ul>
+            <h2>⚡ 触发条件详解</h2>
+            <div class="trigger-detail">
+                <div class="trigger-item">
+                    <h3>📊 Token 阈值触发</h3>
+                    <div class="trigger-code">
+                        <pre><code>// 检查 Token 使用率
+const usageRatio = tokenCount / maxTokens;
+
+if (usageRatio > 0.8) {
+  // 🚨 紧急压缩：使用 AutoCompact
+  await autoCompact(messages);
+} else if (usageRatio > 0.6) {
+  // ⚠️ 警告：使用 SnipCompact
+  await snipCompact(messages);
+}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="trigger-item">
+                    <h3>✅ 任务完成触发</h3>
+                    <div class="trigger-code">
+                        <pre><code>// 子代理任务完成后触发
+if (subAgentTask.status === 'completed') {
+  // 折叠子代理的详细历史
+  await contextCollapse(mainMessages, [subAgentTask]);
+}</code></pre>
+                    </div>
+                </div>
+                
+                <div class="trigger-item">
+                    <h3>🔄 定期压缩触发</h3>
+                    <div class="trigger-code">
+                        <pre><code>// 每 10 轮对话检查一次
+if (conversationTurns % 10 === 0) {
+  const context = buildCompressionContext(messages);
+  await compressionManager.compress(messages);
+}</code></pre>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
@@ -104,5 +551,14 @@ registerCompressionStrategy({
     <footer>
         <p><a href="../index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
     </footer>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true, 
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { useMaxWidth: true, htmlLabels: true }
+        });
+    </script>
 </body>
 </html>

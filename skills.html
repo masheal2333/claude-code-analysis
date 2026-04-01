@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Skills 机制分析 - Claude Code Harness Engineering</title>
+    <title>Skills 机制深度解析 - Claude Code Harness Engineering</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/skills.css">
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
@@ -16,8 +16,12 @@
             <a href="index.html">← 返回首页</a>
             <a href="#overview">概述</a>
             <a href="#architecture">架构设计</a>
+            <a href="#loading-mechanism">加载机制</a>
+            <a href="#skill-types">Skill 类型</a>
+            <a href="#skill-discovery">Skill Discovery</a>
             <a href="#implementation">实现细节</a>
             <a href="#examples">代码示例</a>
+            <a href="#best-practices">最佳实践</a>
         </nav>
     </header>
 
@@ -65,221 +69,426 @@
                             <td>全局</td>
                             <td>可限定目录/项目</td>
                         </tr>
+                        <tr>
+                            <td>复用性</td>
+                            <td>低</td>
+                            <td>高（可共享）</td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
         <section id="architecture">
-            <h2>🏗️ Skills 架构设计</h2>
-            <div class="mermaid">
-                graph TB
-                    subgraph "Skill 加载层"
-                        A[本地 .claude/skills/] --> D[Skill 注册表]
-                        B[全局 ~/.claude/skills/] --> D
-                        C[MCP 服务] --> D
-                    end
+            <h2>🏗️ 架构设计</h2>
+            <div class="architecture-diagram">
+                <div class="mermaid">
+                    graph TB
+                        subgraph "Skill 加载层"
+                            A[Skill 定义] --> B[SKILL.md 文件]
+                            B --> C[Skill Loader]
+                            C --> D[Skill 注册表]
+                        end
 
-                    subgraph "Skill 解析层"
-                        D --> E[Frontmatter 解析]
-                        E --> F[参数提取]
-                        E --> G[权限检查]
-                    end
+                        subgraph "触发层"
+                            E[用户输入] --> F[意图识别]
+                            F --> G{匹配 Skill?}
+                            G -->|是| H[Skill 匹配器]
+                            G -->|否| I[普通对话]
+                        end
 
-                    subgraph "Skill 执行层"
-                        H[SkillTool] --> I{执行模式}
-                        I -->|内联| J[直接注入 Prompt]
-                        I -->|Forked| K[子代理执行]
-                        J --> L[结果聚合]
-                        K --> L
-                    end
+                        subgraph "执行层"
+                            H --> J[Skill Tool]
+                            J --> K[加载 Prompt]
+                            K --> L[执行步骤]
+                            L --> M[返回结果]
+                        end
 
-                    subgraph "结果处理"
-                        L --> M[Tool Result]
-                        M --> N[上下文注入]
-                    end
+                        subgraph "知识注入层"
+                            N[SKILL.md] --> O[Prompt 提取]
+                            O --> P[tool_result 注入]
+                            P --> Q[上下文扩展]
+                        end
 
-                    D --> H
+                        D --> H
+                        M --> Q
+                </div>
             </div>
         </section>
 
-        <section id="implementation">
-            <h2>⚙️ 实现细节</h2>
-            
-            <div class="code-analysis">
-                <div class="code-block">
-                    <h3>1. Skill 定义 (Markdown + Frontmatter)</h3>
-                    <pre><code>---
-name: remember
-description: Review auto-memory entries
-whenToUse: Use when user wants to review memory
-userInvocable: true
----
+        <section id="loading-mechanism">
+            <h2>🔄 加载机制详解</h2>
+            <div class="loading-detail">
+                <h3>📋 加载流程</h3>
+                <div class="mermaid">
+                    sequenceDiagram
+                        participant User as 用户
+                        participant CC as Claude Code
+                        participant SL as Skill Loader
+                        participant SM as Skill Matcher
+                        participant ST as Skill Tool
 
-# Memory Review
-
-## Goal
-Review the user's memory landscape...
-
-## Steps
-1. Gather all memory layers
-2. Classify entries
-3. Present report</code></pre>
+                        User->>CC: 输入请求
+                        CC->>SM: 分析意图
+                        SM->>SL: 查找匹配的 Skill
+                        SL->>SM: 返回 Skill 列表
+                        SM->>CC: 推荐最佳匹配
+                        CC->>User: 显示 Skill 推荐
+                        User->>CC: 确认执行
+                        CC->>ST: 调用 Skill Tool
+                        ST->>ST: 加载 SKILL.md
+                        ST->>ST: 解析 Prompt
+                        ST->>CC: 注入 tool_result
+                        CC->>User: 执行完成
                 </div>
+                
+                <div class="loading-code">
+                    <h3>💻 加载过程代码</h3>
+                    <pre><code>// skills/loadSkill.ts
 
-                <div class="code-block">
-                    <h3>2. Skill 注册机制</h3>
-                    <pre><code>// src/skills/bundledSkills.ts
-interface SkillConfig {
+interface SkillDefinition {
   name: string;
   description: string;
-  whenToUse: string;
-  userInvocable: boolean;
-  getPromptForCommand: (args?: string) => Promise&lt;ContentBlock[]&gt;;
+  prompt: string;
+  path: string;
+  triggers?: string[];
+  directoryTriggers?: Set<string>;
 }
 
-function registerBundledSkill(config: SkillConfig) {
-  // 注册到全局 Skill 注册表
-  skillRegistry.set(config.name, {
-    type: 'prompt',
-    ...config
-  });
-}</code></pre>
-                </div>
+async function loadSkill(skillName: string): Promise<SkillDefinition> {
+  // 1. 查找 Skill 文件
+  const skillPath = await findSkillPath(skillName);
+  
+  // 2. 读取 SKILL.md
+  const skillContent = await readFile(skillPath);
+  
+  // 3. 解析 Skill 定义
+  const skill = parseSkillDefinition(skillContent);
+  
+  // 4. 注册到 Skill 注册表
+  await registerSkill(skill);
+  
+  return skill;
+}
 
-                <div class="code-block">
-                    <h3>3. Skill 执行流程</h3>
-                    <pre><code>// src/tools/SkillTool/SkillTool.ts
-async function executeForkedSkill(
-  command: Command,
-  args: string | undefined,
-  context: ToolUseContext
-): Promise&lt;ToolResult&gt; {
-  // 1. 获取 Prompt 内容
-  const prompt = await command.getPromptForCommand(args);
+async function findSkillPath(skillName: string): Promise<string> {
+  // 查找顺序：
+  // 1. 项目目录 .claude/skills/
+  // 2. 用户目录 ~/.claude/skills/
+  // 3. 内置 skills/
+  // 4. 远程市场
   
-  // 2. 创建隔离的子代理上下文
-  const agentId = createAgentId();
+  const searchPaths = [
+    `.claude/skills/${skillName}/SKILL.md`,
+    `~/.claude/skills/${skillName}/SKILL.md`,
+    `skills/${skillName}/SKILL.md`
+  ];
   
-  // 3. 在子代理中执行
-  const result = await runAgent({
-    agentId,
-    messages: [createUserMessage(prompt)],
-    context
-  });
+  for (const path of searchPaths) {
+    if (await fileExists(path)) {
+      return path;
+    }
+  }
   
-  return result;
+  throw new Error(`Skill not found: ${skillName}`);
 }</code></pre>
                 </div>
             </div>
         </section>
 
-        <section id="examples">
-            <h2>📚 实际案例分析</h2>
-            
-            <div class="skill-example">
-                <h3>案例 1: 内置 Skill - remember</h3>
-                <p><strong>用途：</strong> 记忆管理，将自动记忆条目整理到 CLAUDE.md</p>
-                <div class="code-block">
-                    <pre><code>// src/skills/bundled/remember.ts
-registerBundledSkill({
-  name: 'remember',
-  description: 'Review auto-memory entries...',
-  whenToUse: 'Use when user wants to review memory',
-  userInvocable: true,
-  isEnabled: () => isAutoMemoryEnabled(),
-  async getPromptForCommand(args) {
-    let prompt = SKILL_PROMPT;
-    if (args) {
-      prompt += `\n## Additional context\n\n${args}`;
-    }
-    return [{ type: 'text', text: prompt }];
-  }
-});</code></pre>
+        <section id="skill-types">
+            <h2>📦 Skill 类型详解</h2>
+            <div class="skill-types">
+                <div class="skill-type">
+                    <h3>1. 本地文件 Skill</h3>
+                    <div class="skill-info">
+                        <p><strong>位置：</strong><code>.claude/skills/</code> 或 <code>~/.claude/skills/</code></p>
+                        <p><strong>格式：</strong>SKILL.md 文件</p>
+                        <p><strong>特点：</strong></p>
+                        <ul>
+                            <li>✅ 完全本地化，无需网络</li>
+                            <li>✅ 可以包含脚本和配置</li>
+                            <li>✅ 支持目录级触发</li>
+                        </ul>
+                    </div>
+                    <div class="skill-example">
+                        <pre><code>.claude/skills/
+├── my-skill/
+│   ├── SKILL.md          # Skill 定义
+│   ├── scripts/          # 脚本目录
+│   │   └── run.sh
+│   └── config/           # 配置目录
+│       └── settings.json</code></pre>
+                    </div>
                 </div>
-            </div>
-
-            <div class="skill-example">
-                <h3>案例 2: 目录触发器 (CLAUDE.md)</h3>
-                <p><strong>原理：</strong> 检测到目录中的 CLAUDE.md 时自动加载相关 Skill</p>
-                <div class="code-block">
-                    <pre><code>// src/skills/loadSkillsDir.ts
-async function loadMarkdownFilesForSubdir(
-  dir: string
-): Promise&lt;MarkdownFile[]&gt; {
-  // 1. 扫描 .claude/skills/ 目录
-  const files = await fs.readdir(dir);
-  
-  // 2. 解析 Frontmatter
-  for (const file of files) {
-    const content = await fs.readFile(file);
-    const { data, content: body } = parseFrontmatter(content);
-    
-    // 3. 注册为 Skill
-    registerSkill({
-      name: data.name,
-      description: data.description,
-      prompt: body
-    });
+                
+                <div class="skill-type">
+                    <h3>2. MCP 服务 Skill</h3>
+                    <div class="skill-info">
+                        <p><strong>来源：</strong>通过 MCP 协议连接的服务</p>
+                        <p><strong>格式：</strong>MCP 工具定义</p>
+                        <p><strong>特点：</strong></p>
+                        <ul>
+                            <li>✅ 可以访问外部服务</li>
+                            <li>✅ 支持实时数据</li>
+                            <li>✅ 需要网络连接</li>
+                        </ul>
+                    </div>
+                    <div class="skill-example">
+                        <pre><code>// MCP 服务配置
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"]
+    }
   }
 }</code></pre>
+                    </div>
+                </div>
+                
+                <div class="skill-type">
+                    <h3>3. 远程市场 Skill</h3>
+                    <div class="skill-info">
+                        <p><strong>来源：</strong>clawhub.com 等 Skill 市场</p>
+                        <p><strong>格式：</strong>打包的 Skill 模块</p>
+                        <p><strong>特点：</strong></p>
+                        <ul>
+                            <li>✅ 社区共享</li>
+                            <li>✅ 版本管理</li>
+                            <li>✅ 需要安装</li>
+                        </ul>
+                    </div>
+                    <div class="skill-example">
+                        <pre><code># 从市场安装 Skill
+clawhub install skill-name
+
+# 更新 Skill
+clawhub update skill-name</code></pre>
+                    </div>
                 </div>
             </div>
         </section>
 
         <section id="skill-discovery">
-            <h2>🔍 Skill 发现机制</h2>
-            
-            <div class="discovery-flow">
-                <div class="flow-step">
-                    <div class="step-num">1</div>
-                    <div class="step-content">
-                        <h4>静态扫描</h4>
-                        <p>启动时扫描以下位置：</p>
-                        <ul>
-                            <li>~/.claude/skills/ (全局)</li>
-                            <li>.claude/skills/ (项目级)</li>
-                            <li>Bundled Skills (内置)</li>
-                        </ul>
-                    </div>
+            <h2>🔍 Skill Discovery (智能发现)</h2>
+            <div class="discovery-detail">
+                <h3>🎯 发现机制</h3>
+                <p>Claude Code 会根据上下文自动推荐相关的 Skill：</p>
+                
+                <div class="mermaid">
+                    graph LR
+                        A[用户输入] --> B[意图分析]
+                        B --> C[关键词提取]
+                        C --> D[匹配 Skill 描述]
+                        D --> E[推荐列表]
+                        E --> F[用户选择]
+                        F --> G[执行 Skill]
                 </div>
                 
-                <div class="flow-step">
-                    <div class="step-num">2</div>
-                    <div class="step-content">
-                        <h4>动态触发</h4>
-                        <p>运行时事件触发：</p>
-                        <ul>
-                            <li>目录切换时重新扫描 CLAUDE.md</li>
-                            <li>MCP 服务连接时加载远程 Skills</li>
-                            <li>用户手动安装市场 Skill</li>
-                        </ul>
-                    </div>
+                <div class="discovery-code">
+                    <h3>💻 实现代码</h3>
+                    <pre><code>// skills/skillDiscovery.ts
+
+interface SkillDiscoveryResult {
+  skill: SkillDefinition;
+  confidence: number;
+  reason: string;
+}
+
+async function discoverSkills(
+  userInput: string
+): Promise<SkillDiscoveryResult[]> {
+  // 1. 提取关键词
+  const keywords = extractKeywords(userInput);
+  
+  // 2. 获取所有可用的 Skill
+  const allSkills = await getAllSkills();
+  
+  // 3. 计算匹配度
+  const results: SkillDiscoveryResult[] = [];
+  
+  for (const skill of allSkills) {
+    const confidence = calculateConfidence(keywords, skill);
+    
+    if (confidence > 0.5) {  // 置信度阈值
+      results.push({
+        skill,
+        confidence,
+        reason: generateReason(keywords, skill)
+      });
+    }
+  }
+  
+  // 4. 按置信度排序
+  return results.sort((a, b) => b.confidence - a.confidence);
+}
+
+function calculateConfidence(
+  keywords: string[],
+  skill: SkillDefinition
+): number {
+  let score = 0;
+  
+  // 检查 Skill 名称
+  if (keywords.some(k => skill.name.includes(k))) {
+    score += 0.3;
+  }
+  
+  // 检查 Skill 描述
+  if (keywords.some(k => skill.description.includes(k))) {
+    score += 0.4;
+  }
+  
+  // 检查触发词
+  if (skill.triggers?.some(t => keywords.includes(t))) {
+    score += 0.3;
+  }
+  
+  return score;
+}</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="implementation">
+            <h2>⚙️ 实现细节</h2>
+            <div class="implementation-detail">
+                <h3>📋 SkillTool 核心实现</h3>
+                <pre><code>// tools/SkillTool.ts
+
+interface SkillToolParams {
+  skill: string;
+  command?: string;
+  args?: Record<string, any>;
+}
+
+class SkillTool implements Tool {
+  name = 'skill';
+  description = 'Execute a skill to perform specialized tasks';
+  
+  async execute(params: SkillToolParams): Promise<ToolResult> {
+    // 1. 加载 Skill
+    const skill = await loadSkill(params.skill);
+    
+    // 2. 获取 Prompt
+    const prompt = await skill.getPromptForCommand(params.command);
+    
+    // 3. 通过 tool_result 注入
+    return {
+      type: 'tool_result',
+      content: prompt,
+      metadata: {
+        skillName: skill.name,
+        skillPath: skill.path
+      }
+    };
+  }
+}
+
+// Skill Prompt 注入机制
+async function injectSkillPrompt(
+  skill: SkillDefinition,
+  command?: string
+): Promise<string> {
+  // 读取 SKILL.md 内容
+  const content = await readFile(skill.path);
+  
+  // 解析 Markdown
+  const sections = parseMarkdown(content);
+  
+  // 根据命令提取相关部分
+  if (command) {
+    return extractCommandSection(sections, command);
+  }
+  
+  return content;
+}</code></pre>
+            </div>
+        </section>
+
+        <section id="examples">
+            <h2>📚 使用示例</h2>
+            <div class="example-detail">
+                <h3>1. 创建自定义 Skill</h3>
+                <pre><code># 创建 Skill 目录
+mkdir -p .claude/skills/code-review
+
+# 创建 SKILL.md
+cat > .claude/skills/code-review/SKILL.md << 'SKILLEOF'
+# Code Review Skill
+
+## Description
+Perform comprehensive code review with best practices.
+
+## Usage
+When user asks for code review, use this skill.
+
+## Steps
+1. Read the code file
+2. Check for:
+   - Code style violations
+   - Potential bugs
+   - Performance issues
+   - Security vulnerabilities
+3. Provide detailed feedback
+
+## Triggers
+- "review code"
+- "check code quality"
+- "code review"
+SKILLEOF
+
+# Skill 自动加载
+# 当用户说 "review code" 时，会自动推荐此 Skill</code></pre>
+
+                <h3>2. 使用内置 Skill</h3>
+                <pre><code># Claude Code 内置的 Skill
+claude> 使用 skill: github
+# 会加载 GitHub 相关的 Skill，提供：
+# - 仓库操作
+# - Issue 管理
+# - PR 创建
+
+claude> 使用 skill: filesystem
+# 会加载文件系统 Skill，提供：
+# - 文件搜索
+# - 批量操作
+# - 目录分析</code></pre>
+            </div>
+        </section>
+
+        <section id="best-practices">
+            <h2>💡 最佳实践</h2>
+            <div class="best-practices">
+                <div class="practice">
+                    <h3>✅ 推荐做法</h3>
+                    <ul>
+                        <li>🎯 <strong>明确的描述</strong>：在 SKILL.md 中详细描述 Skill 的用途</li>
+                        <li>🔑 <strong>清晰的触发词</strong>：设置准确的触发关键词</li>
+                        <li>📝 <strong>完整的文档</strong>：包含使用示例和注意事项</li>
+                        <li>🔄 <strong>版本管理</strong>：使用 Git 管理 Skill 版本</li>
+                    </ul>
                 </div>
                 
-                <div class="flow-step">
-                    <div class="step-num">3</div>
-                    <div class="step-content">
-                        <h4>智能推荐</h4>
-                        <p>根据上下文推荐：</p>
-                        <ul>
-                            <li>分析用户输入意图</li>
-                            <li>匹配 Skill description</li>
-                            <li>通过 skill_discovery 推荐</li>
-                        </ul>
-                    </div>
+                <div class="practice">
+                    <h3>❌ 避免的做法</h3>
+                    <ul>
+                        <li>🚫 <strong>过于宽泛的描述</strong>：避免模糊的 Skill 定义</li>
+                        <li>🚫 <strong>缺少触发词</strong>：不要让 Skill 难以被发现</li>
+                        <li>🚫 <strong>过大的 Prompt</strong>：避免加载过多不必要的内容</li>
+                        <li>🚫 <strong>没有测试</strong>：确保 Skill 在各种场景下都能工作</li>
+                    </ul>
                 </div>
             </div>
         </section>
     </main>
 
-        <div class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</div>
     <footer>
-        <p><a href="index.html">← 返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
+        <p><a href="index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
     </footer>
 
     <script>
-        // 初始化 Mermaid
         mermaid.initialize({ 
             startOnLoad: true, 
             theme: 'default',
@@ -288,17 +497,22 @@ async function loadMarkdownFilesForSubdir(
         });
 
         // 返回顶部按钮
-        const backToTop = document.querySelector('.back-to-top');
+        const backToTop = document.createElement('div');
+        backToTop.className = 'back-to-top';
+        backToTop.innerHTML = '↑';
+        backToTop.onclick = () => window.scrollTo({top: 0, behavior: 'smooth'});
+        document.body.appendChild(backToTop);
+
         window.addEventListener('scroll', () => {
             if (window.scrollY > 300) {
-                backToTop.style.display = 'block';
+                backToTop.style.display = 'flex';
             } else {
                 backToTop.style.display = 'none';
             }
         });
 
         // 平滑滚动
-        document.querySelectorAll('nav a).forEach(anchor => {
+        document.querySelectorAll('nav a').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
                 const href = this.getAttribute('href');
                 if (href.startsWith('#')) {
@@ -311,7 +525,7 @@ async function loadMarkdownFilesForSubdir(
             });
         });
 
-        console.log('🔍 Skills 机制分析已加载);
+        console.log('🔍 Skills 机制分析已加载');
     </script>
 </body>
 </html>
