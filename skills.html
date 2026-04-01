@@ -13,7 +13,7 @@
         <h1>🧠 Skills 机制深度解析</h1>
         <p>探索 Claude Code 如何通过 Skills 实现 "按需加载知识" 的核心机制</p>
         <nav>
-            <a href="index.html">返回首页</a>
+            <a href="index.html">← 返回首页</a>
             <a href="#overview">概述</a>
             <a href="#architecture">架构设计</a>
             <a href="#implementation">实现细节</a>
@@ -273,12 +273,45 @@ async function loadMarkdownFilesForSubdir(
         </section>
     </main>
 
+        <div class="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">↑</div>
     <footer>
-        <p><a href="index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
+        <p><a href="index.html">← 返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
     </footer>
 
     <script>
-        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+        // 初始化 Mermaid
+        mermaid.initialize({ 
+            startOnLoad: true, 
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { useMaxWidth: true, htmlLabels: true }
+        });
+
+        // 返回顶部按钮
+        const backToTop = document.querySelector('.back-to-top');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                backToTop.style.display = 'block';
+            } else {
+                backToTop.style.display = 'none';
+            }
+        });
+
+        // 平滑滚动
+        document.querySelectorAll('nav a).forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (href.startsWith('#')) {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    if (target) {
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                }
+            });
+        });
+
+        console.log('🔍 Skills 机制分析已加载);
     </script>
 </body>
 </html>
