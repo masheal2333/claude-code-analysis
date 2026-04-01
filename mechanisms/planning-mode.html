@@ -6,6 +6,7 @@
     <title>机制 3: 规划模式 - Claude Code Harness Engineering</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/mechanism.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
 <body>
     <header>
@@ -14,6 +15,7 @@
         <nav>
             <a href="../index.html">← 返回首页</a>
             <a href="#overview">概述</a>
+            <a href="#code">代码分析</a>
             <a href="#workflow">工作流程</a>
             <a href="#tools">相关工具</a>
             <a href="#benefits">优势</a>
@@ -34,32 +36,173 @@
             </div>
         </section>
 
+        <section id="code">
+            <h2>💻 代码分析</h2>
+            <div class="code-block">
+                <h3>EnterPlanModeTool - 进入规划模式</h3>
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>class EnterPlanModeTool implements Tool {
+    name = 'enter_plan_mode';
+    description = 'Enter planning mode to break down complex tasks';
+    
+    async execute(params: PlanModeParams): Promise&lt;ToolResult&gt; {
+        // 1. 分析任务复杂度
+        const complexity = analyzeTaskComplexity(params.task);
+        
+        // 2. 生成步骤列表
+        const steps = await generateSteps(params.task, complexity);
+        
+        // 3. 进入规划模式
+        await this.context.enterPlanMode({
+            task: params.task,
+            steps: steps,
+            currentStep: 0
+        });
+        
+        return {
+            content: `进入规划模式，已生成 ${steps.length} 个步骤`,
+            metadata: { steps }
+        };
+    }
+}</code></pre>
+                    <pre class="code-panel" data-lang="python"><code>from dataclasses import dataclass
+from typing import List, Any
+
+@dataclass
+class PlanModeParams:
+    task: str
+    max_steps: int = 10
+
+class EnterPlanModeTool:
+    name = "enter_plan_mode"
+    description = "Enter planning mode to break down complex tasks"
+    
+    async def execute(self, params: PlanModeParams) -> dict:
+        # 1. 分析任务复杂度
+        complexity = analyze_task_complexity(params.task)
+        
+        # 2. 生成步骤列表
+        steps = await generate_steps(params.task, complexity)
+        
+        # 3. 进入规划模式
+        await self.context.enter_plan_mode({
+            "task": params.task,
+            "steps": steps,
+            "current_step": 0
+        })
+        
+        return {
+            "content": f"进入规划模式，已生成 {len(steps)} 个步骤",
+            "metadata": {"steps": steps}
+        }</code></pre>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <h3>TodoWriteTool - 创建任务步骤</h3>
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>interface TodoItem {
+    id: string;
+    content: string;
+    status: 'pending' | 'in_progress' | 'completed';
+}
+
+class TodoWriteTool implements Tool {
+    name = 'todo_write';
+    description = 'Create and manage task steps';
+    
+    async execute(params: TodoWriteParams): Promise&lt;ToolResult&gt; {
+        const { action, todo_id, content } = params;
+        
+        switch (action) {
+            case 'create':
+                return await this.createTodo(content);
+            case 'update':
+                return await this.updateTodo(todo_id, content);
+            case 'complete':
+                return await this.completeTodo(todo_id);
+            case 'reorder':
+                return await this.reorderTodos(params.order);
+        }
+    }
+    
+    private async createTodo(content: string): Promise&lt;TodoResult&gt; {
+        const todo: TodoItem = {
+            id: generateId(),
+            content,
+            status: 'pending'
+        };
+        await this.saveTodo(todo);
+        return { content: `创建任务: ${content}` };
+    }
+}</code></pre>
+                    <pre class="code-panel" data-lang="python"><code>from dataclasses import dataclass
+from enum import Enum
+from typing import List, Optional
+
+class TodoStatus(Enum):
+    PENDING = "pending"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+
+@dataclass
+class TodoItem:
+    id: str
+    content: str
+    status: TodoStatus
+
+class TodoWriteTool:
+    name = "todo_write"
+    description = "Create and manage task steps"
+    
+    async def execute(self, params: dict) -> dict:
+        action = params.get("action")
+        todo_id = params.get("todo_id")
+        content = params.get("content")
+        
+        if action == "create":
+            return await self.create_todo(content)
+        elif action == "update":
+            return await self.update_todo(todo_id, content)
+        elif action == "complete":
+            return await self.complete_todo(todo_id)
+        elif action == "reorder":
+            return await self.reorder_todos(params.get("order"))
+    
+    async def create_todo(self, content: str) -> dict:
+        todo = TodoItem(
+            id=str(uuid.uuid4()),
+            content=content,
+            status=TodoStatus.PENDING
+        )
+        await self.save_todo(todo)
+        return {"content": f"创建任务: {content}"}</code></pre>
+                </div>
+            </div>
+        </section>
+
         <section id="workflow">
             <h2>🔄 工作流程</h2>
-            <div class="flow-diagram">
-                <pre>
-用户请求
-    ↓
-[进入规划模式]
-    ↓
-[分析任务复杂度]
-    ↓
-[生成步骤列表]
-    ↓
-[用户确认计划]
-    ↓
-[执行步骤 1]
-    ↓
-[标记完成]
-    ↓
-[执行步骤 2]
-    ↓
-...
-    ↓
-[所有步骤完成]
-    ↓
-[退出规划模式]
-                </pre>
+            <div class="mermaid">
+                graph TD
+                    A[用户请求] --> B[进入规划模式]
+                    B --> C[分析任务复杂度]
+                    C --> D[生成步骤列表]
+                    D --> E[用户确认计划]
+                    E --> F[执行步骤 1]
+                    F --> G[标记完成]
+                    G --> H[执行步骤 2]
+                    H --> I[...]
+                    I --> J[所有步骤完成]
+                    J --> K[退出规划模式]
             </div>
         </section>
 
@@ -102,5 +245,15 @@
     <footer>
         <p><a href="../index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
     </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true, 
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { useMaxWidth: true, htmlLabels: true }
+        });
+    </script>
 </body>
 </html>
