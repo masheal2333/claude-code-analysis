@@ -23,7 +23,6 @@
             <a href="#loading-mechanism">加载机制</a>
             <a href="#skill-types">Skill 类型</a>
             <a href="#skill-discovery">Skill Discovery</a>
-            <a href="#progressive-disclosure">渐进式披露</a>
             <a href="#implementation">实现细节</a>
             <a href="#examples">代码示例</a>
             <a href="#best-practices">最佳实践</a>
@@ -755,9 +754,7 @@ fs_skill = cc.load_skill("filesystem")
                 </div>
             </div>
         </section>
-            
-
-<section id="progressive-disclosure">
+            <section id="progressive-disclosure">
             <h2>🔍 渐进式披露机制 (Progressive Disclosure)</h2>
             
             <div class="concept">
@@ -1069,6 +1066,7 @@ await skillManager.cleanupSkill('react-best-practices');
                 </div>
             </div>
         </section>
+
 </main>
 
     <footer>
@@ -1118,4 +1116,315 @@ await skillManager.cleanupSkill('react-best-practices');
     <script src="js/app.js"></script>
 </body>
 </html>
+        <section id="progressive-disclosure">
+            <h2>🔍 渐进式披露机制 (Progressive Disclosure)</h2>
+            
+            <div class="concept">
+                <p><strong>渐进式披露</strong>是 Claude Code Skills 的核心设计理念，它确保 AI 只在需要时加载必要的知识，避免上下文过载。</p>
+                
+                <div class="highlight">
+                    <h3>🎯 核心原则</h3>
+                    <ul>
+                        <li>🔍 <strong>按需发现</strong> - 只在相关场景下发现 Skill</li>
+                        <li>📦 <strong>按需加载</strong> - 只在需要时注入知识</li>
+                        <li>🧹 <strong>自动清理</strong> - 任务完成后释放上下文</li>
+                        <li>⚡ <strong>高效执行</strong> - 最小化 Token 消耗</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="discovery-flow">
+                <h3>🔄 渐进式披露流程</h3>
+                <div class="mermaid">
+                    graph TD
+                        A[用户输入] --> B{关键词匹配?}
+                        B -->|是| C[触发 Skill 发现]
+                        B -->|否| D[正常对话]
+                        C --> E[扫描 SKILL.md 文件]
+                        E --> F[读取描述和触发器]
+                        F --> G{匹配当前任务?}
+                        G -->|是| H[注入 Skill 上下文]
+                        G -->|否| I[跳过 Skill]
+                        H --> J[执行任务]
+                        J --> K[清理上下文]
+                        K --> L[返回结果]
+                        D --> M[继续对话]
+                </div>
+            </div>
+            
+            <div class="implementation-details">
+                <h3>⚙️ 实现机制</h3>
+                
+                <div class="code-block-new">
+                    <div class="code-block-header">
+                        <div class="code-block-tabs">
+                            <button class="code-block-tab active" data-lang="typescript">TypeScript</button>
+                            <button class="code-block-tab " data-lang="python">Python</button>
+                        </div>
+                        <div class="code-block-actions">
+                            <button class="code-block-action copy-btn">📋 复制</button>
+                            <button class="code-block-action fullscreen-btn">⛶ 全屏</button>
+                        </div>
+                    </div>
+                    <div class="code-block-content">
+                        <pre class="code-block-panel active" data-lang="typescript"><code class="language-typescript">// Skill 发现和加载机制
+interface SkillConfig {
+    name: string;
+    description: string;
+    triggers: string[];  // 触发关键词
+    files: string[];     // 相关文件
+    priority: number;    // 加载优先级
+}
+
+class SkillManager {
+    private skills: Map<string, SkillConfig> = new Map();
+    
+    // 渐进式发现：扫描目录中的 SKILL.md 文件
+    async discoverSkills(directory: string): Promise<void> {
+        const skillFiles = await glob(`${directory}/**/SKILL.md`);
         
+        for (const file of skillFiles) {
+            const content = await readFile(file);
+            const skill = this.parseSkillFile(content);
+            
+            if (this.shouldLoadSkill(skill, currentContext)) {
+                this.skills.set(skill.name, skill);
+            }
+        }
+    }
+    
+    // 按需加载：只在需要时注入上下文
+    async loadSkillIfNeeded(skillName: string, context: Context): Promise<void> {
+        const skill = this.skills.get(skillName);
+        if (!skill) return;
+        
+        // 检查是否匹配当前任务
+        if (this.matchesContext(skill, context)) {
+            await this.injectSkillContext(skill);
+        }
+    }
+    
+    // 自动清理：任务完成后释放上下文
+    async cleanupSkill(skillName: string): Promise<void> {
+        this.skills.delete(skillName);
+        await this.removeSkillContext(skillName);
+    }
+}</code></pre>
+                        <pre class="code-block-panel " data-lang="python"><code class="language-python"># Skill 发现和加载机制
+from dataclasses import dataclass
+from pathlib import Path
+import glob
+
+@dataclass
+class SkillConfig:
+    name: str
+    description: str
+    triggers: list[str]  # 触发关键词
+    files: list[str]     # 相关文件
+    priority: int        # 加载优先级
+
+class SkillManager:
+    def __init__(self):
+        self.skills: dict[str, SkillConfig] = {}
+    
+    # 渐进式发现：扫描目录中的 SKILL.md 文件
+    async def discover_skills(self, directory: str) -> None:
+        skill_files = glob.glob(f"{directory}/**/SKILL.md", recursive=True)
+        
+        for file in skill_files:
+            content = await self.read_file(file)
+            skill = self.parse_skill_file(content)
+            
+            if self.should_load_skill(skill, current_context):
+                self.skills[skill.name] = skill
+    
+    # 按需加载：只在需要时注入上下文
+    async def load_skill_if_needed(self, skill_name: str, context: Context) -> None:
+        skill = self.skills.get(skill_name)
+        if not skill:
+            return
+        
+        # 检查是否匹配当前任务
+        if self.matches_context(skill, context):
+            await self.inject_skill_context(skill)
+    
+    # 自动清理：任务完成后释放上下文
+    async def cleanup_skill(self, skill_name: str) -> None:
+        del self.skills[skill_name]
+        await self.remove_skill_context(skill_name)</code></pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="discovery-patterns">
+                <h3>🔍 发现模式详解</h3>
+                
+                <div class="pattern-grid">
+                    <div class="pattern-card">
+                        <h4>1. 关键词触发</h4>
+                        <p>通过 SKILL.md 中的描述和文件名匹配用户输入</p>
+                        <div class="pattern-example">
+                            <strong>示例：</strong>
+                            <pre><code class="language-markdown">---
+name: weather
+description: Get weather forecasts
+triggers: ["weather", "forecast", "temperature"]
+---
+
+# Weather Skill
+When user asks about weather, use this skill.</code></pre>
+                        </div>
+                    </div>
+                    
+					<div class="pattern-card">
+                        <h4>2. 目录感知</h4>
+                        <p>根据当前工作目录自动加载相关 Skill</p>
+                        <div class="pattern-example">
+                            <strong>示例：</strong>
+                            <pre><code class="language-typescript">// 在项目根目录加载项目特定 Skill
+if (cwd.includes('frontend')) {
+    await loadSkill('react-best-practices');
+} else if (cwd.includes('backend')) {
+    await loadSkill('api-design-patterns');
+}</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="pattern-card">
+                        <h4>3. 上下文感知</h4>
+                        <p>根据对话内容智能推荐相关 Skill</p>
+                        <div class="pattern-example">
+                            <strong>示例：</strong>
+                            <pre><code class="language-python"># 分析对话上下文
+context_keywords = extract_keywords(conversation_history)
+matching_skills = find_skills_by_keywords(context_keywords)
+
+# 智能推荐
+for skill in matching_skills:
+    if skill.relevance_score > 0.8:
+        recommend_skill(skill)</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="performance-benefits">
+                <h3>⚡ 性能优势</h3>
+                
+                <div class="comparison-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>指标</th>
+                                <th>传统方式 (System Prompt)</th>
+                                <th>渐进式披露 (Skills)</th>
+                                <th>改进</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>初始 Token 消耗</strong></td>
+                                <td>高 (所有知识一次性加载)</td>
+                                <td>低 (仅加载基础框架)</td>
+                                <td>🚀 减少 80%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>上下文大小</strong></td>
+                                <td>大 (持续占用)</td>
+                                <td>小 (按需加载)</td>
+                                <td>📉 减少 70%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>响应速度</strong></td>
+                                <td>慢 (处理大量上下文)</td>
+                                <td>快 (精简上下文)</td>
+                                <td>⚡ 提升 60%</td>
+                            </tr>
+                            <tr>
+                                <td><strong>知识更新</strong></td>
+                                <td>困难 (需更新系统提示)</td>
+                                <td>简单 (更新 Skill 文件)</td>
+                                <td>🔄 更灵活</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="real-world-example">
+                <h3>🌍 实际应用示例</h3>
+                
+                <div class="example-scenario">
+                    <h4>场景：开发 React 应用</h4>
+                    <div class="scenario-flow">
+                        <div class="flow-step">
+                            <strong>1. 用户输入</strong>
+                            <pre><code class="language-bash">请帮我创建一个 React 组件，需要使用 useState 和 useEffect</code></pre>
+                        </div>
+                        
+                        <div class="flow-step">
+                            <strong>2. Skill 发现</strong>
+                            <pre><code class="language-typescript">// 系统检测到关键词: "React", "useState", "useEffect"
+const matchingSkills = await skillManager.discover({
+    keywords: ["react", "hooks", "component"],
+    directory: currentWorkingDirectory
+});
+// 发现: react-best-practices.skill.md</code></pre>
+                        </div>
+                        
+                        <div class="flow-step">
+                            <strong>3. 按需加载</strong>
+                            <pre><code class="language-typescript">// 只加载 React 相关知识
+await skillManager.loadSkill('react-best-practices', {
+    context: "创建 React 组件",
+    requirements: ["useState", "useEffect"]
+});</code></pre>
+                        </div>
+                        
+                        <div class="flow-step">
+                            <strong>4. 执行任务</strong>
+                            <pre><code class="language-typescript">// AI 使用加载的知识创建组件
+const component = await createReactComponent({
+    hooks: ["useState", "useEffect"],
+    bestPractices: loadedSkill.rules
+});</code></pre>
+                        </div>
+                        
+                        <div class="flow-step">
+                            <strong>5. 自动清理</strong>
+                            <pre><code class="language-typescript">// 任务完成后清理上下文
+await skillManager.cleanupSkill('react-best-practices');
+// 释放内存，准备下一个任务</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="best-practices">
+                <h3>💡 最佳实践</h3>
+                
+                <div class="practice-grid">
+                    <div class="practice-card">
+                        <h4>✅ 推荐做法</h4>
+                        <ul>
+                            <li>在 SKILL.md 中明确描述触发条件</li>
+                            <li>使用具体的关键词作为触发器</li>
+                            <li>保持 Skill 文件精简 focused</li>
+                            <li>定期清理不再使用的 Skill</li>
+                            <li>为不同场景创建专用 Skill</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="practice-card">
+                        <h4>❌ 避免的做法</h4>
+                        <ul>
+                            <li>在单个 Skill 中包含过多知识</li>
+                            <li>使用模糊的触发关键词</li>
+                            <li>在 System Prompt 中硬编码所有知识</li>
+                            <li>忽略 Skill 的版本管理</li>
+                            <li>不清理已加载的 Skill 上下文</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>

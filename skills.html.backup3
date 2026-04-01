@@ -23,7 +23,6 @@
             <a href="#loading-mechanism">加载机制</a>
             <a href="#skill-types">Skill 类型</a>
             <a href="#skill-discovery">Skill Discovery</a>
-            <a href="#progressive-disclosure">渐进式披露</a>
             <a href="#implementation">实现细节</a>
             <a href="#examples">代码示例</a>
             <a href="#best-practices">最佳实践</a>
