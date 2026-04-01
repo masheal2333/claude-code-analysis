@@ -40,11 +40,11 @@
             <div class="code-block">
                 <h3>TaskCreate - 创建任务</h3>
                 <div class="code-tabs">
-                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
-                    <button class="code-tab" data-lang="python">Python</button>
+                    <button class="code-tab " data-lang="typescript">TypeScript</button>
+                    <button class="code-tab active" data-lang="python">Python</button>
                 </div>
                 <div class="code-content">
-                    <pre class="code-panel active" data-lang="typescript"><code>interface Task {
+                    <pre class="code-panel " data-lang="typescript"><code>interface Task {
     id: string;
     content: string;
     status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
@@ -70,7 +70,7 @@ async function createTask(params: CreateTaskParams): Promise&lt;Task&gt; {
     
     return task;
 }</code></pre>
-                    <pre class="code-panel" data-lang="python"><code>from dataclasses import dataclass, field
+                    <pre class="code-panel active" data-lang="python"><code>from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional
@@ -122,11 +122,11 @@ def create_task(
             <div class="code-block">
                 <h3>TaskUpdate - 更新任务</h3>
                 <div class="code-tabs">
-                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
-                    <button class="code-tab" data-lang="python">Python</button>
+                    <button class="code-tab " data-lang="typescript">TypeScript</button>
+                    <button class="code-tab active" data-lang="python">Python</button>
                 </div>
                 <div class="code-content">
-                    <pre class="code-panel active" data-lang="typescript"><code>async function updateTask(
+                    <pre class="code-panel " data-lang="typescript"><code>async function updateTask(
     taskId: string, 
     updates: Partial&lt;Task&gt;
 ): Promise&lt;Task&gt; {
@@ -143,7 +143,7 @@ def create_task(
     
     return task;
 }</code></pre>
-                    <pre class="code-panel" data-lang="python"><code>from typing import Dict, Any
+                    <pre class="code-panel active" data-lang="python"><code>from typing import Dict, Any
 
 def update_task(task_id: str, updates: Dict[str, Any]) -> Task:
     task = get_task_from_disk(task_id)

@@ -252,22 +252,22 @@ function highlightSyntax(line) {
     // 高亮关键字
     allKeywords.forEach(keyword => {
         const regex = new RegExp(`\\b(${keyword})\\b`, 'g');
-        line = line.replace(regex, '<span class="hl-keyword">$1</span>');
+        line = line.replace(regex, '<span class="keyword">$1</span>');
     });
     
     // 高亮字符串
-    line = line.replace(/(["'`])(?:(?!\1)[^\\]|\\.)*\1/g, '<span class="hl-string">$&</span>');
+    line = line.replace(/(["'`])(?:(?!\1)[^\\]|\\.)*\1/g, '<span class="string">$&</span>');
     
     // 高亮注释
     if (line.trimStart().startsWith('//') || line.trimStart().startsWith('#')) {
-        line = '<span class="hl-comment">' + line + '</span>';
+        line = '<span class="comment">' + line + '</span>';
     }
     
     // 高亮数字
-    line = line.replace(/\b(\d+\.?\d*)\b/g, '<span class="hl-number">$1</span>');
+    line = line.replace(/\b(\d+\.?\d*)\b/g, '<span class="number">$1</span>');
     
     // 高亮函数调用
-    line = line.replace(/\b([a-zA-Z_]\w*)\s*\(/g, '<span class="hl-function">$1</span>(');
+    line = line.replace(/\b([a-zA-Z_]\w*)\s*\(/g, '<span class="function">$1</span>(');
     
     return line;
 }

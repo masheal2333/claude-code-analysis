@@ -65,11 +65,11 @@
             <div class="code-block">
                 <h3>permissions/ - 权限系统</h3>
                 <div class="code-tabs">
-                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
-                    <button class="code-tab" data-lang="python">Python</button>
+                    <button class="code-tab " data-lang="typescript">TypeScript</button>
+                    <button class="code-tab active" data-lang="python">Python</button>
                 </div>
                 <div class="code-content">
-                    <pre class="code-panel active" data-lang="typescript"><code>interface PermissionCheck {
+                    <pre class="code-panel " data-lang="typescript"><code>interface PermissionCheck {
   tool: string;
   params: any;
   context: ToolUseContext;
@@ -99,7 +99,7 @@ async function checkPermissions(check: PermissionCheck) {
     confirmationRequired: true
   };
 }</code></pre>
-                    <pre class="code-panel" data-lang="python"><code>from dataclasses import dataclass
+                    <pre class="code-panel active" data-lang="python"><code>from dataclasses import dataclass
 from typing import Any
 
 @dataclass
@@ -137,11 +137,11 @@ async def check_permissions(check: PermissionCheck) -> dict:
             <div class="code-block">
                 <h3>危险操作确认</h3>
                 <div class="code-tabs">
-                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
-                    <button class="code-tab" data-lang="python">Python</button>
+                    <button class="code-tab " data-lang="typescript">TypeScript</button>
+                    <button class="code-tab active" data-lang="python">Python</button>
                 </div>
                 <div class="code-content">
-                    <pre class="code-panel active" data-lang="typescript"><code>// 当 Claude 尝试删除文件时
+                    <pre class="code-panel " data-lang="typescript"><code>// 当 Claude 尝试删除文件时
 const result = await checkPermissions({
   tool: "file_delete",
   params: { path: "/important/file.txt" },
@@ -160,7 +160,7 @@ if (!result.allowed) {
     throw new Error("用户取消了操作");
   }
 }</code></pre>
-                    <pre class="code-panel" data-lang="python"><code># 当 Claude 尝试删除文件时
+                    <pre class="code-panel active" data-lang="python"><code># 当 Claude 尝试删除文件时
 result = await check_permissions(
     PermissionCheck(
         tool="file_delete",

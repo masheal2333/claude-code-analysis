@@ -130,11 +130,11 @@
                 <div class="strategy-code">
                     <h4>💻 实现代码</h4>
                     <div class="code-tabs">
-                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
-                    <button class="code-tab" data-lang="python">Python</button>
+                    <button class="code-tab " data-lang="typescript">TypeScript</button>
+                    <button class="code-tab active" data-lang="python">Python</button>
                 </div>
                 <div class="code-content">
-                    <pre class="code-panel active" data-lang="typescript"><code>// services/compact/autoCompact.ts
+                    <pre class="code-panel " data-lang="typescript"><code>// services/compact/autoCompact.ts
 
 interface AutoCompactConfig {
   threshold: number;        // Token 阈值（默认 0.8）
@@ -186,7 +186,7 @@ async function autoCompact(
     }
   ];
 }</code></pre>
-                    <pre class="code-panel" data-lang="python"><code># services/compact/auto_compact.py
+                    <pre class="code-panel active" data-lang="python"><code># services/compact/auto_compact.py
 
 from dataclasses import dataclass
 from typing import List, Dict, Any
@@ -293,11 +293,11 @@ assistant: 我来优化...
                 <div class="strategy-code">
                     <h4>💻 实现代码</h4>
                     <div class="code-tabs">
-                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
-                    <button class="code-tab" data-lang="python">Python</button>
+                    <button class="code-tab " data-lang="typescript">TypeScript</button>
+                    <button class="code-tab active" data-lang="python">Python</button>
                 </div>
                 <div class="code-content">
-                    <pre class="code-panel active" data-lang="typescript"><code>// services/compact/snipCompact.ts
+                    <pre class="code-panel " data-lang="typescript"><code>// services/compact/snipCompact.ts
 
 interface SnipableToolResult {
   toolName: string;
@@ -350,7 +350,7 @@ function analyzeToolResult(msg: ToolMessage): SnipableToolResult {
     canSnip: snippableTools.includes(toolName)
   };
 }</code></pre>
-                    <pre class="code-panel" data-lang="python"><code># services/compact/snip_compact.py
+                    <pre class="code-panel active" data-lang="python"><code># services/compact/snip_compact.py
 
 from dataclasses import dataclass
 from typing import List, Dict, Any
@@ -452,11 +452,11 @@ content:
                 <div class="strategy-code">
                     <h4>💻 实现代码</h4>
                     <div class="code-tabs">
-                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
-                    <button class="code-tab" data-lang="python">Python</button>
+                    <button class="code-tab " data-lang="typescript">TypeScript</button>
+                    <button class="code-tab active" data-lang="python">Python</button>
                 </div>
                 <div class="code-content">
-                    <pre class="code-panel active" data-lang="typescript"><code>// services/compact/contextCollapse.ts
+                    <pre class="code-panel " data-lang="typescript"><code>// services/compact/contextCollapse.ts
 
 interface SubAgentTask {
   taskId: string;
@@ -505,7 +505,7 @@ async function contextCollapse(
   
   return result;
 }</code></pre>
-                    <pre class="code-panel" data-lang="python"><code># services/compact/context_collapse.py
+                    <pre class="code-panel active" data-lang="python"><code># services/compact/context_collapse.py
 
 from dataclasses import dataclass
 from typing import List, Dict, Any
@@ -597,11 +597,11 @@ assistant: 我将创建子代理来并行分析
             <div class="code-block">
                 <h3>services/compact/ - 压缩服务架构</h3>
                 <div class="code-tabs">
-                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
-                    <button class="code-tab" data-lang="python">Python</button>
+                    <button class="code-tab " data-lang="typescript">TypeScript</button>
+                    <button class="code-tab active" data-lang="python">Python</button>
                 </div>
                 <div class="code-content">
-                    <pre class="code-panel active" data-lang="typescript"><code>// services/compact/index.ts
+                    <pre class="code-panel " data-lang="typescript"><code>// services/compact/index.ts
 
 // 1. 压缩策略接口
 interface CompressionStrategy {
@@ -677,7 +677,7 @@ compressionManager.registerStrategy({
   shouldCompress: (ctx) => ctx.hasToolResults,
   compress: snipCompact
 });</code></pre>
-                    <pre class="code-panel" data-lang="python"><code># services/compact/__init__.py
+                    <pre class="code-panel active" data-lang="python"><code># services/compact/__init__.py
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -766,11 +766,11 @@ compression_manager.register_strategy(CompressionStrategy(
                     <h3>📊 Token 阈值触发</h3>
                     <div class="trigger-code">
                         <div class="code-tabs">
-                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
-                    <button class="code-tab" data-lang="python">Python</button>
+                    <button class="code-tab " data-lang="typescript">TypeScript</button>
+                    <button class="code-tab active" data-lang="python">Python</button>
                 </div>
                 <div class="code-content">
-                    <pre class="code-panel active" data-lang="typescript"><code>// 检查 Token 使用率
+                    <pre class="code-panel " data-lang="typescript"><code>// 检查 Token 使用率
 const usageRatio = tokenCount / maxTokens;
 
 if (usageRatio > 0.8) {
@@ -780,7 +780,7 @@ if (usageRatio > 0.8) {
   // ⚠️ 警告：使用 SnipCompact
   await snipCompact(messages);
 }</code></pre>
-                    <pre class="code-panel" data-lang="python"><code># 检查 Token 使用率
+                    <pre class="code-panel active" data-lang="python"><code># 检查 Token 使用率
 usage_ratio = token_count / max_tokens
 
 if usage_ratio > 0.8:
@@ -797,16 +797,16 @@ elif usage_ratio > 0.6:
                     <h3>✅ 任务完成触发</h3>
                     <div class="trigger-code">
                         <div class="code-tabs">
-                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
-                    <button class="code-tab" data-lang="python">Python</button>
+                    <button class="code-tab " data-lang="typescript">TypeScript</button>
+                    <button class="code-tab active" data-lang="python">Python</button>
                 </div>
                 <div class="code-content">
-                    <pre class="code-panel active" data-lang="typescript"><code>// 子代理任务完成后触发
+                    <pre class="code-panel " data-lang="typescript"><code>// 子代理任务完成后触发
 if (subAgentTask.status === 'completed') {
   // 折叠子代理的详细历史
   await contextCollapse(mainMessages, [subAgentTask]);
 }</code></pre>
-                    <pre class="code-panel" data-lang="python"><code># 子代理任务完成后触发
+                    <pre class="code-panel active" data-lang="python"><code># 子代理任务完成后触发
 if sub_agent_task.status == "completed":
     # 折叠子代理的详细历史
     await context_collapse(main_messages, [sub_agent_task])</code></pre>
@@ -818,16 +818,16 @@ if sub_agent_task.status == "completed":
                     <h3>🔄 定期压缩触发</h3>
                     <div class="trigger-code">
                         <div class="code-tabs">
-                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
-                    <button class="code-tab" data-lang="python">Python</button>
+                    <button class="code-tab " data-lang="typescript">TypeScript</button>
+                    <button class="code-tab active" data-lang="python">Python</button>
                 </div>
                 <div class="code-content">
-                    <pre class="code-panel active" data-lang="typescript"><code>// 每 10 轮对话检查一次
+                    <pre class="code-panel " data-lang="typescript"><code>// 每 10 轮对话检查一次
 if (conversationTurns % 10 === 0) {
   const context = buildCompressionContext(messages);
   await compressionManager.compress(messages);
 }</code></pre>
-                    <pre class="code-panel" data-lang="python"><code># 每 10 轮对话检查一次
+                    <pre class="code-panel active" data-lang="python"><code># 每 10 轮对话检查一次
 if conversation_turns % 10 == 0:
     context = build_compression_context(messages)
     await compression_manager.compress(messages)</code></pre>
