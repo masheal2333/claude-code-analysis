@@ -6,6 +6,7 @@
     <title>机制 1: 核心循环 - Claude Code Harness Engineering</title>
     <link rel="stylesheet" href="../css/style.css">
     <link rel="stylesheet" href="../css/mechanism.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
 <body>
     <header>
@@ -24,22 +25,26 @@
         <section id="overview">
             <h2>🎯 概述</h2>
             <div class="concept">
-                <p>核心循环是 Claude Code 的心脏。它就是一个简单的 <code>while(true)</code> 循环，不断调用 Claude API，检查返回的 <code>stop_reason</code>，然后执行相应的操作。</p>
-                <p><strong>核心逻辑：</strong></p>
+                <p><strong>核心循环</strong> 是 Claude Code 的心脏。它是一个简单的 while-true 循环，不断调用 Claude API，检查停止原因，执行工具，然后继续。</p>
+                <p><strong>核心思想：</strong></p>
                 <ul>
-                    <li>📤 发送消息给 Claude API</li>
-                    <li>🔍 检查 <code>stop_reason</code></li>
-                    <li>✅ 如果是 <code>stop</code>，返回结果</li>
-                    <li>🔧 如果是 <code>tool_use</code>，执行工具并追加结果</li>
+                    <li>🔄 <strong>循环驱动</strong>：所有 Agent 行为都在循环中完成</li>
+                    <li>🛠️ <strong>工具执行</strong>：当 Claude 返回 tool_use 时，执行工具并继续</li>
+                    <li>📊 <strong>状态管理</strong>：通过 messages 数组维护对话历史</li>
                 </ul>
             </div>
         </section>
 
         <section id="code">
-            <h2>💻 代码分析</h3>
+            <h2>💻 代码分析</h2>
             <div class="code-block">
-                <h3>src/query.ts - 核心循环实现</h3>
-                <pre><code>async function query(messages: Message[]): Promise<Response> {
+                <h3>query.ts - 核心循环实现</h3>
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>async function query(messages: Message[]): Promise&lt;Response&gt; {
     while (true) {
         // 1. 调用 Claude API
         const response = await claude.api.messages.create({
@@ -61,59 +66,71 @@
                 role: "tool", 
                 content: toolResult 
             });
+            
+            // 6. 继续循环
+            continue;
         }
     }
 }</code></pre>
-            </div>
+                    <pre class="code-panel" data-lang="python"><code>from anthropic import Anthropic
+from typing import List, Dict, Any
 
-            <div class="code-block">
-                <h3>关键设计点</h3>
-                <ul>
-                    <li><strong>极简设计</strong>：整个 Agent 系统的核心就是一个循环</li>
-                    <li><strong>状态管理</strong>：通过 messages 数组维护对话历史</li>
-                    <li><strong>工具执行</strong>：工具调用结果作为下一轮输入</li>
-                    <li><strong>无限循环</strong>：直到收到 stop 响应才退出</li>
-                </ul>
+async def query(messages: List[Dict[str, Any]]) -> Dict[str, Any]:
+    client = Anthropic()
+    
+    while True:
+        # 1. 调用 Claude API
+        response = client.messages.create(
+            model="claude-3-opus-20240229",
+            messages=messages,
+            tools=tool_definitions
+        )
+        
+        # 2. 检查停止原因
+        if response.stop_reason == "stop":
+            # 3. 返回最终结果
+            return response
+        elif response.stop_reason == "tool_use":
+            # 4. 执行工具
+            tool_result = await execute_tool(response.tool_use)
+            
+            # 5. 将工具结果追加到消息历史
+            messages.append({
+                "role": "tool",
+                "content": tool_result
+            })
+            
+            # 6. 继续循环
+            continue</code></pre>
+                </div>
             </div>
         </section>
 
         <section id="flow">
             <h2>🔄 执行流程</h2>
             <div class="flow-diagram">
-                <pre>
-用户输入
-    ↓
-[调用 Claude API]
-    ↓
-检查 stop_reason
-    ↓
-┌─────────────────┐
-│ stop_reason=stop │ → 返回最终结果
-└─────────────────┘
-    ↓
-┌─────────────────────┐
-│ stop_reason=tool_use │ → 执行工具
-└─────────────────────┘
-    ↓
-[工具执行完成]
-    ↓
-[将结果追加到 messages]
-    ↓
-[继续循环]
-                </pre>
+                <div class="mermaid">
+                    graph TD
+                        A[开始] --> B[调用 Claude API]
+                        B --> C{检查停止原因}
+                        C -->|stop| D[返回结果]
+                        C -->|tool_use| E[执行工具]
+                        E --> F[追加工具结果]
+                        F --> B
+                        D --> G[结束]
+                </div>
             </div>
         </section>
 
         <section id="significance">
-            <h2>💡 为什么这样设计？</h2>
-            <div class="insight">
-                <h3>设计哲学</h3>
-                <p>这种设计体现了 <strong>"简单即美"</strong> 的工程哲学：</p>
+            <h2>💡 意义</h2>
+            <div class="concept">
+                <p>核心循环的简洁性是 Claude Code 的关键设计：</p>
                 <ul>
-                    <li>🎯 <strong>聚焦核心</strong>：只关注最核心的循环逻辑</li>
-                    <li>🔄 <strong>可预测性</strong>：每次循环都是确定性的</li>
-                    <li>📈 <strong>可扩展性</strong>：工具可以随时添加，循环逻辑不变</li>
-                    <li>🐛 <strong>易调试</strong>：问题可以定位到具体某一轮循环</li>
+                    <li>🎯 <strong>单一职责</strong>：循环只负责调度，不关心具体任务</li>
+                    <li>🔄 <strong>无限扩展</strong>：通过添加工具，可以处理任何任务</li>
+                    <li>📊 <strong>状态清晰</strong>：messages 数组就是完整的状态</li>
+                    <li>🛠️ <strong>易于调试</strong>：每一步都可以追踪和复现</li>
                 </ul>
             </div>
         </section>
@@ -122,5 +139,15 @@
     <footer>
         <p><a href="../index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
     </footer>
+
+    <script src="../js/app.js"></script>
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true, 
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: { useMaxWidth: true, htmlLabels: true }
+        });
+    </script>
 </body>
 </html>

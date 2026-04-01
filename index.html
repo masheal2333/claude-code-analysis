@@ -84,7 +84,12 @@
             <div class="code-analysis">
                 <div class="code-block">
                     <h3>1. 核心循环 (query.ts)</h3>
-                    <pre><code>async function query(messages: Message[]): Promise<Response> {
+                    <div class="code-tabs">
+                        <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                        <button class="code-tab" data-lang="python">Python</button>
+                    </div>
+                    <div class="code-content">
+                        <pre class="code-panel active" data-lang="typescript"><code>async function query(messages: Message[]): Promise&lt;Response&gt; {
     while (true) {
         const response = await claude.api.messages.create({
             model: "claude-3-opus-20240229",
@@ -100,15 +105,34 @@
         }
     }
 }</code></pre>
+                        <pre class="code-panel" data-lang="python"><code>async def query(messages: list[Message]) -> Response:
+    while True:
+        response = await claude.api.messages.create(
+            model="claude-3-opus-20240229",
+            messages=messages,
+            tools=tool_definitions
+        )
+        
+        if response.stop_reason == "stop":
+            return response
+        elif response.stop_reason == "tool_use":
+            tool_result = await execute_tool(response.tool_use)
+            messages.append({"role": "tool", "content": tool_result})</code></pre>
+                    </div>
                 </div>
 
                 <div class="code-block">
                     <h3>2. 工具注册 (Tool.ts)</h3>
-                    <pre><code>interface Tool {
+                    <div class="code-tabs">
+                        <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                        <button class="code-tab" data-lang="python">Python</button>
+                    </div>
+                    <div class="code-content">
+                        <pre class="code-panel active" data-lang="typescript"><code>interface Tool {
     name: string;
     description: string;
     parameters: JSONSchema;
-    execute: (params: any) => Promise<any>;
+    execute: (params: any) => Promise&lt;any&gt;;
 }
 
 function buildTool(definition: ToolDefinition): Tool {
@@ -117,13 +141,32 @@ function buildTool(definition: ToolDefinition): Tool {
         description: definition.description,
         parameters: definition.parameters,
         execute: async (params) => {
-            // 权限检查
             await checkPermissions(definition.name, params);
-            // 执行工具
             return await definition.execute(params);
         }
     };
 }</code></pre>
+                        <pre class="code-panel" data-lang="python"><code>from dataclasses import dataclass
+from typing import Any, Callable
+
+@dataclass
+class Tool:
+    name: str
+    description: str
+    parameters: dict
+    execute: Callable[[Any], Any]
+
+def build_tool(definition: dict) -> Tool:
+    return Tool(
+        name=definition["name"],
+        description=definition["description"],
+        parameters=definition["parameters"],
+        execute=lambda params: (
+            check_permissions(definition["name"], params),
+            definition["execute"](params)
+        )
+    )</code></pre>
+                    </div>
                 </div>
             </div>
         </section>

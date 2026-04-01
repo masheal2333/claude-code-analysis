@@ -14,9 +14,9 @@
         <nav>
             <a href="../index.html">← 返回首页</a>
             <a href="#overview">概述</a>
-            <a href="#architecture">架构设计</a>
-            <a href="#implementation">实现细节</a>
-            <a href="#examples">代码示例</a>
+            <a href="#code">代码分析</a>
+            <a href="#factory">工厂模式</a>
+            <a href="#benefits">优势</a>
         </nav>
     </header>
 
@@ -24,105 +24,151 @@
         <section id="overview">
             <h2>🎯 概述</h2>
             <div class="concept">
-                <p><strong>工具分发系统</strong> 是 Claude Code 的扩展性核心。它通过一个统一的注册和分发机制，让新工具可以轻松集成。</p>
-                <p><strong>核心理念：</strong></p>
+                <p><strong>工具分发</strong> 是 Claude Code 的扩展机制。每个工具都注册到一个分发映射中，当 Claude 返回 tool_use 时，系统会查找并执行对应的工具。</p>
+                <p><strong>核心思想：</strong></p>
                 <ul>
-                    <li>📦 <strong>标准化接口</strong>：所有工具遵循相同的接口</li>
-                    <li>🔌 <strong>即插即用</strong>：注册即可使用，无需修改核心循环</li>
-                    <li>🛡️ <strong>安全默认</strong>：buildTool() 工厂提供安全默认值</li>
-                    <li>📊 <strong>统一管理</strong>：工具的生命周期统一管理</li>
+                    <li>🔌 <strong>即插即用</strong>：添加新工具只需要注册到映射</li>
+                    <li>🏭 <strong>工厂模式</strong>：buildTool() 提供安全默认值</li>
+                    <li>🔒 <strong>权限控制</strong>：每个工具都有权限检查</li>
                 </ul>
             </div>
         </section>
 
-        <section id="architecture">
-            <h2>🏗️ 架构设计</h2>
-            <div class="mermaid">
-                graph LR
-                    A[工具定义] --> B[buildTool]
-                    B --> C[工具注册表]
-                    C --> D[工具分发器]
-                    D --> E[权限检查]
-                    E --> F[工具执行]
-                    F --> G[结果处理]
-            </div>
-        </section>
-
-        <section id="implementation">
-            <h2>⚙️ 实现细节</h2>
+        <section id="code">
+            <h2>💻 代码分析</h2>
             <div class="code-block">
-                <h3>Tool.ts - 工具接口定义</h3>
-                <pre><code>interface Tool {
+                <h3>Tool.ts - 工具定义</h3>
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>interface Tool {
     name: string;
     description: string;
     parameters: JSONSchema;
-    execute: (params: any) => Promise<any>;
+    execute: (params: any) => Promise&lt;any&gt;;
 }
 
-interface ToolDefinition {
-    name: string;
-    description: string;
-    parameters: JSONSchema;
-    execute: (params: any) => Promise<any>;
-    permissions?: Permission[];
-    timeout?: number;
-}</code></pre>
-            </div>
-
-            <div class="code-block">
-                <h3>buildTool() - 工具工厂</h3>
-                <pre><code>function buildTool(definition: ToolDefinition): Tool {
+function buildTool(definition: ToolDefinition): Tool {
     return {
         name: definition.name,
         description: definition.description,
         parameters: definition.parameters,
         execute: async (params) => {
-            // 1. 权限检查
-            if (definition.permissions) {
-                await checkPermissions(definition.name, params);
-            }
-            
-            // 2. 超时控制
-            if (definition.timeout) {
-                return await executeWithTimeout(
-                    definition.execute,
-                    params,
-                    definition.timeout
-                );
-            }
-            
-            // 3. 执行工具
+            // 权限检查
+            await checkPermissions(definition.name, params);
+            // 执行工具
             return await definition.execute(params);
         }
     };
 }</code></pre>
+                    <pre class="code-panel" data-lang="python"><code>from dataclasses import dataclass
+from typing import Any, Callable
+
+@dataclass
+class Tool:
+    name: str
+    description: str
+    parameters: dict
+    execute: Callable[[Any], Any]
+
+def build_tool(definition: dict) -> Tool:
+    return Tool(
+        name=definition["name"],
+        description=definition["description"],
+        parameters=definition["parameters"],
+        execute=lambda params: (
+            check_permissions(definition["name"], params),
+            definition["execute"](params)
+        )
+    )</code></pre>
+                </div>
+            </div>
+
+            <div class="code-block">
+                <h3>tools.ts - 工具注册</h3>
+                <div class="code-tabs">
+                    <button class="code-tab active" data-lang="typescript">TypeScript</button>
+                    <button class="code-tab" data-lang="python">Python</button>
+                </div>
+                <div class="code-content">
+                    <pre class="code-panel active" data-lang="typescript"><code>// 工具注册表
+const toolRegistry = new Map&lt;string, Tool&gt;();
+
+// 注册工具
+function registerTool(tool: Tool) {
+    toolRegistry.set(tool.name, tool);
+}
+
+// 获取工具定义（用于 API 调用）
+function getToolDefinitions() {
+    return Array.from(toolRegistry.values()).map(tool => ({
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.parameters
+    }));
+}
+
+// 执行工具
+async function executeTool(toolUse: ToolUse) {
+    const tool = toolRegistry.get(toolUse.name);
+    if (!tool) {
+        throw new Error(`Unknown tool: ${toolUse.name}`);
+    }
+    return await tool.execute(toolUse.input);
+}</code></pre>
+                    <pre class="code-panel" data-lang="python"><code># 工具注册表
+tool_registry = {}
+
+# 注册工具
+def register_tool(tool: Tool) -> None:
+    tool_registry[tool.name] = tool
+
+# 获取工具定义（用于 API 调用）
+def get_tool_definitions() -> list[dict]:
+    return [
+        {
+            "name": tool.name,
+            "description": tool.description,
+            "parameters": tool.parameters
+        }
+        for tool in tool_registry.values()
+    ]
+
+# 执行工具
+async def execute_tool(tool_use: dict) -> Any:
+    tool_name = tool_use["name"]
+    tool = tool_registry.get(tool_name)
+    if not tool:
+        raise ValueError(f"Unknown tool: {tool_name}")
+    return await tool.execute(tool_use["input"])</code></pre>
+                </div>
             </div>
         </section>
 
-        <section id="examples">
-            <h2>📚 代码示例</h2>
-            <div class="code-block">
-                <h3>注册自定义工具</h3>
-                <pre><code>// 1. 定义工具
-const myTool: ToolDefinition = {
-    name: "my_custom_tool",
-    description: "这是一个自定义工具",
-    parameters: {
-        type: "object",
-        properties: {
-            input: { type: "string" }
-        },
-        required: ["input"]
-    },
-    execute: async (params) => {
-        return { result: `处理: ${params.input}` };
-    }
-};
+        <section id="factory">
+            <h2>🏭 工厂模式</h2>
+            <div class="concept">
+                <p><strong>buildTool()</strong> 是一个工厂函数，它提供以下安全默认值：</p>
+                <ul>
+                    <li>🔒 <strong>权限检查</strong>：自动添加权限检查逻辑</li>
+                    <li>📊 <strong>日志记录</strong>：自动记录工具调用</li>
+                    <li>⚠️ <strong>错误处理</strong>：自动捕获和处理错误</li>
+                    <li>⏱️ <strong>超时控制</strong>：自动设置超时限制</li>
+                </ul>
+            </div>
+        </section>
 
-// 2. 注册工具
-registerTool(myTool);
-
-// 3. 工具现在可以被 Claude 使用了</code></pre>
+        <section id="benefits">
+            <h2>💡 优势</h2>
+            <div class="concept">
+                <ul>
+                    <li>🔌 <strong>易于扩展</strong>：添加新工具只需要实现 Tool 接口</li>
+                    <li>🔄 <strong>热更新</strong>：可以在运行时动态注册工具</li>
+                    <li>📊 <strong>统一管理</strong>：所有工具都在一个注册表中</li>
+                    <li>🛡️ <strong>安全可控</strong>：每个工具都有权限检查</li>
+                </ul>
             </div>
         </section>
     </main>
@@ -130,5 +176,7 @@ registerTool(myTool);
     <footer>
         <p><a href="../index.html">返回首页</a> | 基于 Claude Code v2.1.88 源码分析</p>
     </footer>
+
+    <script src="../js/app.js"></script>
 </body>
 </html>

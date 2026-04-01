@@ -130,6 +130,9 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // 代码切换功能
+    initCodeTabs();
+
     // 平滑滚动 - 只处理 # 开头的链接
     document.querySelectorAll('nav a').forEach(anchor => {
         anchor.addEventListener('click', function(e) {
@@ -148,3 +151,31 @@ document.addEventListener('DOMContentLoaded', function() {
 
     console.log('🔍 Claude Code Harness Engineering 分析已加载');
 });
+
+// 代码切换功能
+function initCodeTabs() {
+    document.querySelectorAll('.code-tabs').forEach(tabContainer => {
+        const tabs = tabContainer.querySelectorAll('.code-tab');
+        const codeBlock = tabContainer.closest('.code-block');
+        const panels = codeBlock.querySelectorAll('.code-panel');
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                const lang = this.dataset.lang;
+                
+                // 更新 tab 状态
+                tabs.forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // 更新 panel 状态
+                panels.forEach(panel => {
+                    if (panel.dataset.lang === lang) {
+                        panel.classList.add('active');
+                    } else {
+                        panel.classList.remove('active');
+                    }
+                });
+            });
+        });
+    });
+}
